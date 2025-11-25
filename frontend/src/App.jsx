@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import { Home as HomeIcon, BookOpen, Grid, User } from 'lucide-react';
 import Home from './pages/Home';
 import Services from './pages/Services';
+import UPISimulation from './pages/Simulation';
 // --- Components for other pages (Placeholders for now) ---
 const Learn = () => <div className="p-8 text-center text-gray-500">Course Library Coming Soon</div>;
 const Profile = () => <div className="p-8 text-center text-gray-500">User Profile Settings</div>;
@@ -38,6 +39,7 @@ function App() {
           <Route path="/learn" element={<Learn />} />
           <Route path="/services" element={<Services />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/simulation/upi" element={<UPISimulation />} />
         </Routes>
         <BottomNav />
       </div>
