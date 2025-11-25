@@ -18,7 +18,6 @@ const Home = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
 
-  // 1. Add State for Listening Mode
   const [isListening, setIsListening] = useState(false);
 
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
@@ -26,12 +25,12 @@ const Home = () => {
     name: storedUser.name || "Guest",
     score: storedUser.total_score || 0,
   });
-  // --- 1. CENTRAL COMMAND PROCESSOR (Updated for Hindi Support) ---
+
+  // Voice command processor
   const processCommand = (rawCommand) => {
     const command = rawCommand.toLowerCase();
     console.log("Processing:", command);
 
-    // 1. UPI / Payment
     if (
       command.includes("upi") ||
       command.includes("pay") ||
@@ -41,9 +40,7 @@ const Home = () => {
       command.includes("पैसा")
     ) {
       navigate("/simulation/upi");
-    }
-    // 2. PM Kisan / Schemes
-    else if (
+    } else if (
       command.includes("kisan") ||
       command.includes("form") ||
       command.includes("yojana") ||
@@ -52,9 +49,7 @@ const Home = () => {
       command.includes("योजना")
     ) {
       navigate("/simulation/form");
-    }
-    // 3. Mandi / Rates
-    else if (
+    } else if (
       command.includes("mandi") ||
       command.includes("rate") ||
       command.includes("bhav") ||
@@ -62,9 +57,7 @@ const Home = () => {
       command.includes("भाव")
     ) {
       navigate("/services/mandi");
-    }
-    // 4. Doctor / Health
-    else if (
+    } else if (
       command.includes("doctor") ||
       command.includes("health") ||
       command.includes("dawa") ||
@@ -73,22 +66,19 @@ const Home = () => {
       command.includes("अस्पताल")
     ) {
       navigate("/services/doctors");
-    }
-    // 5. Fallback
-    else {
+    } else {
       alert(
         `Heard: "${command}". \n\nTry saying: 'Mandi' (मंडी) or 'Kisan' (किसान)`
       );
     }
   };
-  // --- 2. ROBUST VOICE LOGIC ---
+
+  // Voice recognition logic
   const startListening = () => {
-    // Feature Check
     if (
       !("webkitSpeechRecognition" in window) &&
       !("SpeechRecognition" in window)
     ) {
-      // Fallback for non-Chrome browsers
       const fallback = prompt("🎤 Voice not supported. Type command:");
       if (fallback) processCommand(fallback.toLowerCase());
       return;
@@ -114,8 +104,6 @@ const Home = () => {
       console.error("Speech Error:", event.error);
       setIsListening(false);
 
-      // --- THE HACKATHON SAVER ---
-      // If network fails (offline), ask user to type instead.
       if (event.error === "network") {
         const fallback = prompt(
           "⚠️ Offline Voice Error. \n\nType your command (e.g., 'mandi', 'upi'):"
@@ -128,7 +116,6 @@ const Home = () => {
 
     recognition.start();
   };
-  // --- VOICE RECOGNITION LOGIC (FIXED) ---
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -149,181 +136,183 @@ const Home = () => {
 
   return (
     <div className="pb-24 md:pb-8 min-h-screen bg-gray-50">
-      <header className="bg-gradient-to-r from-blue-800 to-blue-600 text-white p-6 md:p-10 rounded-b-[2rem] md:rounded-none shadow-xl">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-100 px-6 py-6 md:py-8">
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
-              <p className="text-blue-200 text-sm font-medium mb-1">
+              <p className="text-gray-500 text-sm font-medium mb-1">
                 {t("welcome")},
               </p>
-              <h1 className="text-3xl md:text-4xl font-bold">{user.name} 🙏</h1>
+              <h1 className="text-3xl md:text-4xl font-semibold text-gray-900">
+                {user.name}
+              </h1>
             </div>
             <div className="flex items-center gap-3">
-              <div className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-full flex items-center gap-2 border border-white/30">
-                <Trophy size={20} className="text-yellow-300" />
-                <span className="font-bold text-lg">{user.score} Pts</span>
+              <div className="bg-blue-50 px-4 py-2.5 rounded-lg flex items-center gap-2 border border-blue-100">
+                <Trophy size={18} className="text-blue-600" />
+                <span className="font-semibold text-gray-900">
+                  {user.score}
+                </span>
+                <span className="text-sm text-gray-500">pts</span>
               </div>
-              <div className="bg-white/20 p-2.5 rounded-full cursor-pointer hover:bg-white/30 transition">
-                <Bell size={24} />
-              </div>
+              <button className="p-2.5 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
+                <Bell size={20} className="text-gray-600" />
+              </button>
             </div>
           </div>
 
           <div className="flex flex-col md:flex-row gap-4 md:items-center">
-            <div className="inline-flex items-center gap-2 bg-blue-900/40 px-4 py-2 rounded-full text-sm backdrop-blur-sm w-fit">
-              <MapPin size={14} />
-              <span>Village: Rampur, UP</span>
+            <div className="inline-flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg text-sm border border-gray-200 w-fit">
+              <MapPin size={14} className="text-gray-500" />
+              <span className="text-gray-700 font-medium">
+                Village: Rampur, UP
+              </span>
             </div>
 
             <div className="flex-1 relative max-w-md">
               <input
                 type="text"
-                placeholder={
+                placeholder={isListening ? "Listening..." : "Search schemes..."}
+                className={`w-full border rounded-lg py-2.5 px-4 pr-12 text-sm outline-none transition-all ${
                   isListening
-                    ? "Listening..."
-                    : "Search schemes (e.g. 'Kisan Credit')"
-                }
-                className={`w-full border rounded-xl py-3 px-4 text-white placeholder-blue-200 focus:outline-none transition duration-300 ${
-                  isListening
-                    ? "bg-red-500/20 border-red-400 animate-pulse placeholder-white"
-                    : "bg-white/10 border-white/20 focus:bg-white/20"
+                    ? "bg-red-50 border-red-300 placeholder-red-400"
+                    : "bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50"
                 }`}
               />
 
-              {/* --- VISUAL FEEDBACK BUTTON --- */}
               <button
                 onClick={startListening}
                 disabled={isListening}
-                className={`absolute right-2 top-2 p-2 rounded-lg transition-all duration-300 shadow-sm ${
+                className={`absolute right-2 top-2 p-1.5 rounded-md transition-all ${
                   isListening
-                    ? "bg-red-500 text-white scale-110 shadow-red-500/50"
-                    : "bg-blue-100 text-blue-700 hover:bg-white hover:scale-105"
+                    ? "bg-red-500 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
                 {isListening ? (
-                  <Loader2 size={20} className="animate-spin" />
+                  <Loader2 size={18} className="animate-spin" />
                 ) : (
-                  <Mic size={20} />
+                  <Mic size={18} />
                 )}
               </button>
-              {/* ----------------------------- */}
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-5xl mx-auto p-6 space-y-8 -mt-4 relative z-10">
+      <div className="max-w-5xl mx-auto px-6 py-8 space-y-8">
+        {/* Daily Challenge & Update */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Daily Challenge */}
           <div>
-            <h2 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
-              <span className="bg-yellow-100 text-yellow-700 p-1 rounded">
-                🔥
-              </span>{" "}
+            <h2 className="font-semibold text-gray-900 mb-4 text-base flex items-center gap-2">
+              <span className="text-orange-600">🔥</span>
               {t("daily_challenge")}
             </h2>
             <Link to="/simulation/upi">
-              <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md border border-blue-100 relative overflow-hidden group transition-all duration-300 transform hover:-translate-y-1 cursor-pointer h-full">
-                <div className="absolute right-0 top-0 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-bl-xl shadow-sm z-10">
-                  +50 pts
-                </div>
-                <div className="flex items-center gap-5">
-                  <div className="bg-blue-50 p-4 rounded-full group-hover:bg-blue-100 transition-colors shrink-0">
-                    <Smartphone className="text-blue-600" size={32} />
+              <div className="bg-white rounded-xl p-6 border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all cursor-pointer group">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-blue-50 rounded-lg flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                      <Smartphone className="text-blue-600" size={24} />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-gray-900 text-lg">
+                        Practice UPI Payment
+                      </h4>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-gray-800 text-xl">
-                      Practice UPI Payment
-                    </h4>
-                    <p className="text-sm text-gray-500 mt-1 leading-relaxed">
-                      Learn to scan & pay safely in a risk-free demo
-                      environment.
-                    </p>
-                    <span className="text-blue-600 text-sm font-bold mt-3 inline-flex items-center gap-1 group-hover:gap-2 transition-all">
-                      Start Lesson <ChevronRight size={16} />
-                    </span>
-                  </div>
+                  <span className="bg-orange-100 text-orange-700 text-xs font-medium px-2.5 py-1 rounded-md">
+                    +50 pts
+                  </span>
                 </div>
+                <p className="text-sm text-gray-600 leading-relaxed mb-4">
+                  Learn to scan & pay safely in a risk-free demo environment.
+                </p>
+                <span className="text-blue-600 text-sm font-medium inline-flex items-center gap-1 group-hover:gap-2 transition-all">
+                  Start Lesson <ChevronRight size={16} />
+                </span>
               </div>
             </Link>
           </div>
 
+          {/* Update Card */}
           <div>
-            <h2 className="font-bold text-gray-800 mb-4 text-lg flex items-center gap-2">
-              <span className="bg-green-100 text-green-700 p-1 rounded">
-                📢
-              </span>{" "}
+            <h2 className="font-semibold text-gray-900 mb-4 text-base flex items-center gap-2">
+              <span className="text-green-600">📢</span>
               {t("update")}
             </h2>
-            <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-6 text-white shadow-md flex flex-col justify-center h-full relative overflow-hidden">
-              <div className="absolute top-0 right-0 opacity-10 transform translate-x-4 -translate-y-4">
-                <Shield size={100} />
+            <div className="bg-gradient-to-br from-purple-600 to-indigo-600 rounded-xl p-6 text-white h-full flex flex-col justify-between min-h-[180px]">
+              <div>
+                <h3 className="font-semibold text-xl mb-2">
+                  Kisan Samman Nidhi
+                </h3>
+                <p className="text-purple-100 text-sm leading-relaxed">
+                  Next installment of ₹2,000 is arriving next week.
+                </p>
               </div>
-              <h3 className="font-bold text-xl relative z-10">
-                Kisan Samman Nidhi
-              </h3>
-              <p className="text-purple-100 text-sm mt-2 relative z-10">
-                Next installment of ₹2,000 is arriving next week.
-              </p>
-              <button className="mt-4 bg-white/20 hover:bg-white/30 border border-white/40 text-white px-4 py-2 rounded-lg text-sm font-bold w-fit transition backdrop-blur-md">
+              <button className="mt-4 bg-white/20 hover:bg-white/30 border border-white/30 text-white px-4 py-2 rounded-lg text-sm font-medium w-fit transition-colors">
                 Check Status
               </button>
             </div>
           </div>
         </div>
 
+        {/* Quick Services */}
         <div>
-          <h2 className="font-bold text-gray-800 mb-4 text-lg">
+          <h2 className="font-semibold text-gray-900 mb-4 text-base">
             {t("quick_services")}
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             {[
               {
                 title: t("schemes"),
-                icon: <Shield size={24} />,
-                color: "bg-green-100 text-green-700",
+                icon: <Shield size={20} />,
+                color: "bg-green-50 text-green-700",
                 link: "/services",
               },
               {
                 title: t("doctors"),
                 icon: "🏥",
-                color: "bg-orange-100 text-orange-700",
+                color: "bg-orange-50 text-orange-700",
                 isTextIcon: true,
                 link: "/services/doctors",
               },
               {
                 title: t("mandi"),
                 icon: "💰",
-                color: "bg-yellow-100 text-yellow-700",
+                color: "bg-yellow-50 text-yellow-700",
                 isTextIcon: true,
                 link: "/services/mandi",
               },
               {
                 title: t("land"),
                 icon: "📜",
-                color: "bg-teal-100 text-teal-700",
+                color: "bg-teal-50 text-teal-700",
                 isTextIcon: true,
                 link: "/services/land-records",
               },
               {
                 title: t("job"),
-                icon: <Briefcase size={24} />,
-                color: "bg-orange-100 text-orange-700",
+                icon: <Briefcase size={20} />,
+                color: "bg-blue-50 text-blue-700",
                 link: "/services/rozgar",
               },
               {
                 title: t("complaint"),
-                icon: <AlertTriangle size={24} />,
-                color: "bg-rose-100 text-rose-700",
+                icon: <AlertTriangle size={20} />,
+                color: "bg-rose-50 text-rose-700",
                 link: "/services/complaint",
               },
             ].map((item, idx) => (
               <Link
                 to={item.link}
                 key={idx}
-                className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center gap-3 hover:shadow-md hover:border-blue-200 transition cursor-pointer group"
+                className="bg-white p-5 rounded-xl border border-gray-100 flex flex-col items-center gap-3 hover:border-gray-200 hover:shadow-sm transition-all cursor-pointer group"
               >
                 <div
-                  className={`w-14 h-14 rounded-full flex items-center justify-center ${item.color} group-hover:scale-110 transition-transform`}
+                  className={`w-12 h-12 rounded-lg flex items-center justify-center ${item.color} group-hover:scale-105 transition-transform`}
                 >
                   {item.isTextIcon ? (
                     <span className="text-2xl">{item.icon}</span>
@@ -331,7 +320,7 @@ const Home = () => {
                     item.icon
                   )}
                 </div>
-                <span className="font-semibold text-gray-700 group-hover:text-blue-700 transition-colors">
+                <span className="font-medium text-gray-700 text-sm text-center">
                   {item.title}
                 </span>
               </Link>

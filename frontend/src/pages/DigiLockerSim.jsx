@@ -11,7 +11,7 @@ import {
   Shield,
   Volume2,
 } from "lucide-react";
-import { saveOfflineAction, speak } from "../utils/offlineSync"; // Import speak utility
+import { saveOfflineAction, speak } from "../utils/offlineSync";
 
 const DigiLockerSim = () => {
   const navigate = useNavigate();
@@ -27,18 +27,15 @@ const DigiLockerSim = () => {
     },
   ]);
 
-  // --- Voice Helper ---
+  // Voice helper
   const playGuide = (text) => speak(text, "hi-IN");
 
   useEffect(() => {
-    // Initial welcome audio
     playGuide("DigiLocker practice mein swagat hai. Kripya login karein.");
-
-    // Cleanup function to stop speaking when component unmounts
     return () => window.speechSynthesis.cancel();
   }, []);
 
-  // --- ANALYTICS HELPER ---
+  // Analytics helper
   const logSuccess = async () => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     const token = localStorage.getItem("token");
@@ -72,14 +69,13 @@ const DigiLockerSim = () => {
   };
 
   const handleFetchDoc = () => {
-    // Simulate searching and adding
     setTimeout(() => {
       setDocuments([
         ...documents,
         { id: 3, title: "COVID Vaccine Cert", issuer: "MoHFW", date: "Today" },
       ]);
-      setStep(2); // Back to dashboard
-      logSuccess(); // Award Points
+      setStep(2);
+      logSuccess();
       alert("🎉 Document Fetched Successfully! (+50 Points)");
       playGuide(
         "Document safalta poorvak mil gaya hai. Aapne 50 points kamaye hain."
@@ -88,15 +84,25 @@ const DigiLockerSim = () => {
   };
 
   return (
-    <div className="min-h-screen bg-indigo-50 font-sans pb-20">
+    <div className="min-h-screen bg-gray-50 font-sans pb-20">
       {/* Header */}
-      <div className="bg-indigo-700 p-6 text-white rounded-b-3xl shadow-lg">
+      <div className="bg-white border-b border-gray-100 px-4 py-4">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate("/services")}>
-              <ArrowLeft />
+            <button
+              onClick={() => navigate("/services")}
+              className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
+            >
+              <ArrowLeft size={20} className="text-gray-700" />
             </button>
-            <h1 className="text-xl font-bold">DigiLocker Simulator</h1>
+            <div>
+              <h1 className="text-base font-semibold text-gray-900">
+                DigiLocker Simulator
+              </h1>
+              <p className="text-xs text-gray-500 font-light">
+                Safe storage for documents
+              </p>
+            </div>
           </div>
           <button
             onClick={() => {
@@ -113,47 +119,46 @@ const DigiLockerSim = () => {
                   "Vaccine Certificate khojne ke liye pehle button par click karein."
                 );
             }}
-            className="bg-white/20 p-2 rounded-full hover:bg-white/30 active:scale-95"
+            className="p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
             aria-label="Play Audio Instructions"
           >
-            <Volume2 size={20} />
+            <Volume2 size={20} className="text-gray-600" />
           </button>
         </div>
-        <p className="text-indigo-200 text-xs ml-9">
-          Safe storage for your official documents
-        </p>
       </div>
 
       <div className="p-6 max-w-md mx-auto">
         {/* STEP 1: LOGIN (OTP) */}
         {step === 1 && (
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-indigo-100 animate-in slide-in-from-bottom">
+          <div className="bg-white p-6 rounded-2xl border border-gray-100">
             <div className="text-center mb-6">
-              <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-indigo-100">
                 <Lock className="text-indigo-600" size={32} />
               </div>
-              <h2 className="text-xl font-bold text-gray-800">Secure Login</h2>
-              <p className="text-gray-500 text-sm">
+              <h2 className="text-xl font-semibold text-gray-900 mb-1">
+                Secure Login
+              </h2>
+              <p className="text-gray-600 text-sm font-light">
                 Enter OTP sent to your mobile.
               </p>
             </div>
 
             <div className="mb-6">
-              <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
+              <label className="text-xs font-medium text-gray-700 uppercase mb-2 block">
                 Mobile Number
               </label>
               <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 mb-4">
                 <Smartphone size={20} className="text-gray-400" />
-                <span className="font-bold text-gray-700">XXXXXX8892</span>
+                <span className="font-medium text-gray-700">XXXXXX8892</span>
               </div>
 
-              <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
+              <label className="text-xs font-medium text-gray-700 uppercase mb-2 block">
                 Enter OTP
               </label>
               <input
                 type="password"
                 placeholder="Try 1234"
-                className="w-full p-3 bg-white rounded-xl border-2 border-indigo-100 outline-none focus:border-indigo-500 text-center text-xl font-bold tracking-widest"
+                className="w-full p-3 bg-white rounded-xl border-2 border-gray-200 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 text-center text-xl font-semibold tracking-widest transition-all"
                 maxLength={4}
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
@@ -162,7 +167,7 @@ const DigiLockerSim = () => {
 
             <button
               onClick={handleLogin}
-              className="w-full bg-indigo-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-indigo-700 transition"
+              className="w-full bg-indigo-600 text-white py-3 rounded-xl font-medium shadow-sm hover:bg-indigo-700 transition-colors"
             >
               Verify & Login
             </button>
@@ -171,9 +176,9 @@ const DigiLockerSim = () => {
 
         {/* STEP 2: DASHBOARD */}
         {step === 2 && (
-          <div className="animate-in fade-in">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="font-bold text-gray-800 text-lg">
+          <div>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="font-semibold text-gray-900 text-lg">
                 Issued Documents
               </h2>
               <button
@@ -183,41 +188,43 @@ const DigiLockerSim = () => {
                     "Naya document khojne ke liye search bar ka upyog karein."
                   );
                 }}
-                className="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-sm font-bold flex items-center gap-1 shadow-md hover:bg-indigo-700"
+                className="bg-indigo-600 text-white px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-1 shadow-sm hover:bg-indigo-700 transition-colors"
               >
                 <Plus size={16} /> Add New
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3 mb-8">
               {documents.map((doc) => (
                 <div
                   key={doc.id}
-                  className="bg-white p-4 rounded-xl shadow-sm border border-indigo-50 flex items-center justify-between group cursor-pointer hover:shadow-md transition"
+                  className="bg-white p-4 rounded-xl border border-gray-100 flex items-center justify-between group cursor-pointer hover:border-gray-200 hover:shadow-sm transition-all"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center">
+                    <div className="w-10 h-10 bg-green-50 rounded-full flex items-center justify-center border border-green-100">
                       <CheckCircle className="text-green-600" size={20} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-800">{doc.title}</h3>
-                      <p className="text-xs text-gray-500">
+                      <h3 className="font-medium text-gray-900 text-sm">
+                        {doc.title}
+                      </h3>
+                      <p className="text-xs text-gray-500 font-light">
                         {doc.issuer} • {doc.date}
                       </p>
                     </div>
                   </div>
-                  <div className="text-indigo-600 opacity-0 group-hover:opacity-100 transition">
+                  <div className="text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
                     <FileText size={20} />
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="mt-8 bg-blue-50 p-4 rounded-xl border border-blue-100">
-              <h3 className="font-bold text-blue-800 flex items-center gap-2 mb-2">
+            <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+              <h3 className="font-semibold text-blue-900 flex items-center gap-2 mb-2 text-sm">
                 <Shield size={18} /> Did you know?
               </h3>
-              <p className="text-sm text-blue-700 leading-relaxed">
+              <p className="text-sm text-blue-700 leading-relaxed font-light">
                 Documents in DigiLocker are legally equivalent to original
                 physical documents under the IT Act, 2000.
               </p>
@@ -227,8 +234,8 @@ const DigiLockerSim = () => {
 
         {/* STEP 3: FETCH SIMULATOR */}
         {step === 3 && (
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-indigo-100 animate-in slide-in-from-right">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">
+          <div className="bg-white p-6 rounded-2xl border border-gray-100">
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">
               Search Document
             </h2>
 
@@ -240,30 +247,30 @@ const DigiLockerSim = () => {
               <input
                 type="text"
                 placeholder="e.g. Vaccine, Marksheet"
-                className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500"
+                className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50 transition-all"
               />
             </div>
 
             <div className="space-y-2">
-              <p className="text-xs font-bold text-gray-400 uppercase mb-2">
+              <p className="text-xs font-medium text-gray-500 uppercase mb-3">
                 Popular
               </p>
               <button
                 onClick={handleFetchDoc}
-                className="w-full text-left p-3 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 transition flex items-center gap-3"
+                className="w-full text-left p-3 rounded-lg hover:bg-gray-50 border border-gray-200 hover:border-gray-300 transition-all flex items-center gap-3"
               >
-                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center text-xs">
+                <div className="w-8 h-8 bg-orange-50 rounded-full flex items-center justify-center text-xs border border-orange-100">
                   💉
                 </div>
-                <span className="font-medium text-gray-700">
+                <span className="font-medium text-gray-700 text-sm">
                   COVID-19 Vaccine Certificate
                 </span>
               </button>
-              <button className="w-full text-left p-3 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 transition flex items-center gap-3 opacity-50 cursor-not-allowed">
-                <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center text-xs">
+              <button className="w-full text-left p-3 rounded-lg border border-gray-200 opacity-50 cursor-not-allowed flex items-center gap-3">
+                <div className="w-8 h-8 bg-yellow-50 rounded-full flex items-center justify-center text-xs border border-yellow-100">
                   ⛽
                 </div>
-                <span className="font-medium text-gray-700">
+                <span className="font-medium text-gray-700 text-sm">
                   LPG Subscription Voucher
                 </span>
               </button>
@@ -274,7 +281,7 @@ const DigiLockerSim = () => {
                 setStep(2);
                 playGuide("Aap document ki list mein waapas aa gaye hain.");
               }}
-              className="mt-6 w-full py-3 text-gray-500 font-bold text-sm"
+              className="mt-6 w-full py-3 text-gray-600 font-medium text-sm hover:bg-gray-50 rounded-lg transition-colors"
             >
               Cancel
             </button>

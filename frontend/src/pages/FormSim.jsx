@@ -47,7 +47,6 @@ const FormSim = () => {
 
     setStep(step + 1);
 
-    // Step specific audio hints
     if (step === 1) playHelp("Apna Aadhaar number darj karein.");
     if (step === 2) playHelp("Apne khet ke kagaz ki photo khinchein.");
     if (step === 3) playHelp("Sabhi jaankari check karein aur submit karein.");
@@ -63,15 +62,10 @@ const FormSim = () => {
       points: 50,
     };
 
-    // Robust Submit Logic: Offline First Approach
     if (!navigator.onLine) {
-      // 1. Offline
       saveOfflineAction("/api/progress", "POST", payload);
-      alert(
-        "📝 Form Saved Offline! It will submit automatically when internet returns."
-      );
+      alert("📝 Form Saved Offline! It will submit automatically when internet returns.");
     } else {
-      // 2. Online
       try {
         if (token && token !== "guest-token") {
           await fetch("http://localhost:8080/api/progress", {
@@ -95,33 +89,47 @@ const FormSim = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans pb-20">
-      <div className="bg-green-700 p-6 text-white rounded-b-3xl shadow-lg">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100 px-4 py-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <button onClick={() => navigate(-1)}>
-              <ArrowLeft />
+            <button 
+              onClick={() => navigate(-1)}
+              className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
+            >
+              <ArrowLeft size={20} className="text-gray-700" />
             </button>
-            <h1 className="text-xl font-bold">PM Kisan Form</h1>
+            <div>
+              <h1 className="text-base font-semibold text-gray-900">PM Kisan Form</h1>
+              <p className="text-xs text-gray-500">Step {step} of 4</p>
+            </div>
           </div>
           <button
             onClick={() => playHelp("Kripya step by step form bharein.")}
-            className="bg-white/20 p-2 rounded-full hover:bg-white/30 active:scale-95"
+            className="p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
           >
-            <Volume2 size={20} />
+            <Volume2 size={20} className="text-gray-600" />
           </button>
         </div>
 
-        <div className="flex justify-between items-center px-4">
+        {/* Progress Bar */}
+        <div className="flex justify-between items-center px-2">
           {[1, 2, 3, 4].map((s) => (
-            <div
-              key={s}
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-                step >= s
-                  ? "bg-white text-green-700 scale-110"
-                  : "bg-green-800 text-green-400"
-              }`}
-            >
-              {step > s ? <Check size={16} /> : s}
+            <div key={s} className="flex items-center flex-1">
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
+                  step >= s
+                    ? "bg-green-600 text-white scale-110"
+                    : "bg-gray-100 text-gray-400"
+                }`}
+              >
+                {step > s ? <Check size={16} /> : s}
+              </div>
+              {s < 4 && (
+                <div className={`flex-1 h-1 mx-2 rounded ${
+                  step > s ? "bg-green-600" : "bg-gray-100"
+                }`}></div>
+              )}
             </div>
           ))}
         </div>
@@ -130,35 +138,38 @@ const FormSim = () => {
       <div className="p-6 max-w-md mx-auto">
         {/* STEP 1: ELIGIBILITY */}
         {step === 1 && (
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 animate-in slide-in-from-right">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">
+          <div className="bg-white p-6 rounded-2xl border border-gray-100">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
               Step 1: Eligibility Check
             </h2>
-            <div className="space-y-4">
+            <p className="text-sm text-gray-600 mb-6 font-light">
+              Confirm you meet the basic requirements
+            </p>
+            <div className="space-y-3">
               <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
                 <input
                   type="checkbox"
-                  className="w-5 h-5 text-green-600"
+                  className="w-5 h-5 text-green-600 rounded"
                   defaultChecked
                 />
-                <span className="text-gray-700 text-sm">
+                <span className="text-gray-700 text-sm font-light">
                   I am an Indian Farmer
                 </span>
               </div>
               <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-xl border border-blue-100">
                 <input
                   type="checkbox"
-                  className="w-5 h-5 text-green-600"
+                  className="w-5 h-5 text-green-600 rounded"
                   defaultChecked
                 />
-                <span className="text-gray-700 text-sm">
+                <span className="text-gray-700 text-sm font-light">
                   I own less than 2 Hectares land
                 </span>
               </div>
             </div>
             <button
               onClick={handleNext}
-              className="w-full mt-6 bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700"
+              className="w-full mt-6 bg-green-600 text-white py-3 rounded-xl font-medium hover:bg-green-700 transition-colors"
             >
               Confirm & Proceed
             </button>
@@ -167,12 +178,15 @@ const FormSim = () => {
 
         {/* STEP 2: AADHAAR ENTRY */}
         {step === 2 && (
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 animate-in slide-in-from-right">
-            <h2 className="text-lg font-bold text-gray-800 mb-4">
+          <div className="bg-white p-6 rounded-2xl border border-gray-100">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
               Step 2: Identity Details
             </h2>
+            <p className="text-sm text-gray-600 mb-6 font-light">
+              Enter your Aadhaar number for verification
+            </p>
             <div className="mb-4">
-              <label className="block text-sm text-gray-500 mb-1">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 Aadhaar Number (12 digits)
               </label>
               <div className="relative">
@@ -183,7 +197,7 @@ const FormSim = () => {
                 <input
                   type="text"
                   placeholder="0000 0000 0000"
-                  className="w-full pl-10 p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-green-500"
+                  className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-green-500 focus:ring-2 focus:ring-green-50 transition-all"
                   maxLength={12}
                   value={formData.aadhaar}
                   onChange={(e) =>
@@ -192,17 +206,17 @@ const FormSim = () => {
                 />
               </div>
               {error && (
-                <p className="text-red-500 text-xs mt-2 flex items-center gap-1">
+                <p className="text-red-500 text-xs mt-2 flex items-center gap-1 font-medium">
                   <AlertCircle size={12} /> {error}
                 </p>
               )}
-              <p className="text-xs text-orange-500 mt-2">
+              <p className="text-xs text-orange-600 mt-2 font-medium">
                 🔒 Simulation Mode: Enter any 12 digits
               </p>
             </div>
             <button
               onClick={handleNext}
-              className="w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700"
+              className="w-full bg-green-600 text-white py-3 rounded-xl font-medium hover:bg-green-700 transition-colors"
             >
               Verify Identity
             </button>
@@ -211,17 +225,17 @@ const FormSim = () => {
 
         {/* STEP 3: DOCUMENT UPLOAD */}
         {step === 3 && (
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 animate-in slide-in-from-right">
-            <h2 className="text-lg font-bold text-gray-800 mb-2">
+          <div className="bg-white p-6 rounded-2xl border border-gray-100">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
               Step 3: Land Record
             </h2>
-            <p className="text-gray-500 text-sm mb-6">
+            <p className="text-gray-600 text-sm mb-6 font-light">
               Take a photo of your land document (7/12).
             </p>
 
             <div
               onClick={() => setFormData({ ...formData, hasUploaded: true })}
-              className={`border-2 border-dashed rounded-2xl h-40 flex flex-col items-center justify-center cursor-pointer transition ${
+              className={`border-2 border-dashed rounded-2xl h-40 flex flex-col items-center justify-center cursor-pointer transition-all ${
                 formData.hasUploaded
                   ? "bg-green-50 border-green-500"
                   : "bg-gray-50 border-gray-300 hover:bg-gray-100"
@@ -230,14 +244,14 @@ const FormSim = () => {
               {formData.hasUploaded ? (
                 <>
                   <Check className="text-green-600 mb-2" size={32} />
-                  <span className="text-green-700 font-bold">
+                  <span className="text-green-700 font-medium text-sm">
                     Photo Uploaded!
                   </span>
                 </>
               ) : (
                 <>
                   <Upload className="text-gray-400 mb-2" size={32} />
-                  <span className="text-gray-500 font-medium">
+                  <span className="text-gray-500 font-medium text-sm">
                     Tap to Upload Photo
                   </span>
                 </>
@@ -245,14 +259,14 @@ const FormSim = () => {
             </div>
 
             {error && (
-              <p className="text-red-500 text-xs mt-4 text-center flex justify-center items-center gap-1">
+              <p className="text-red-500 text-xs mt-4 text-center flex justify-center items-center gap-1 font-medium">
                 <AlertCircle size={12} /> {error}
               </p>
             )}
 
             <button
               onClick={handleNext}
-              className="w-full mt-6 bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700"
+              className="w-full mt-6 bg-green-600 text-white py-3 rounded-xl font-medium hover:bg-green-700 transition-colors"
             >
               Next Step
             </button>
@@ -261,31 +275,31 @@ const FormSim = () => {
 
         {/* STEP 4: REVIEW & SUBMIT */}
         {step === 4 && (
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 animate-in slide-in-from-right text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="bg-white p-6 rounded-2xl border border-gray-100 text-center">
+            <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-green-100">
               <FileText className="text-green-600" size={32} />
             </div>
-            <h2 className="text-xl font-bold text-gray-800 mb-2">
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">
               Review Application
             </h2>
-            <p className="text-gray-500 text-sm mb-6">
+            <p className="text-gray-600 text-sm mb-6 font-light">
               Ensure all details are correct.
             </p>
 
-            <div className="bg-gray-50 p-4 rounded-xl text-left space-y-3 mb-6">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Scheme:</span>
-                <span className="font-bold text-gray-800">PM Kisan Nidhi</span>
+            <div className="bg-gray-50 p-4 rounded-xl text-left space-y-3 mb-6 border border-gray-100">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600 text-sm">Scheme:</span>
+                <span className="font-medium text-gray-900 text-sm">PM Kisan Nidhi</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Aadhaar:</span>
-                <span className="font-bold text-gray-800">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600 text-sm">Aadhaar:</span>
+                <span className="font-medium text-gray-900 text-sm">
                   {formData.aadhaar}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Documents:</span>
-                <span className="text-green-600 font-bold flex items-center gap-1">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600 text-sm">Documents:</span>
+                <span className="text-green-600 font-medium flex items-center gap-1 text-sm">
                   <Check size={14} /> Uploaded
                 </span>
               </div>
@@ -293,7 +307,7 @@ const FormSim = () => {
 
             <button
               onClick={submitForm}
-              className="w-full bg-green-600 text-white py-3 rounded-xl font-bold shadow-lg hover:bg-green-700 transition transform active:scale-95"
+              className="w-full bg-green-600 text-white py-3 rounded-xl font-medium shadow-sm hover:bg-green-700 transition-colors"
             >
               Submit Application
             </button>

@@ -5,8 +5,8 @@ import {
   Stethoscope,
   Sprout,
   ChevronRight,
-  BookOpen, // Added icon
-  Info, // Added icon
+  BookOpen,
+  Info,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -51,45 +51,49 @@ const Services = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24 md:pb-8">
-      {/* Revised Header for Educational Context */}
-      <div className="bg-gradient-to-r from-indigo-700 to-purple-800 p-8 md:p-12 rounded-b-[2rem] md:rounded-none text-white shadow-lg">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100 px-6 py-8 md:py-10">
         <div className="max-w-5xl mx-auto">
-          <div className="flex items-center gap-3 mb-2 opacity-90">
-            <BookOpen size={20} className="text-yellow-300" />
-            <span className="font-bold text-yellow-300 uppercase tracking-wider text-sm">
+          <div className="flex items-center gap-3 mb-2 text-blue-600">
+            <BookOpen size={20} />
+            <span className="font-medium uppercase tracking-wider text-xs">
               Practice Mode
             </span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">
-            Service Simulator 🇮🇳
+          <h1 className="text-3xl md:text-4xl font-semibold text-gray-900 mb-2">
+            Service Simulator
           </h1>
-          <p className="text-indigo-100 text-base md:text-lg">
+          <p className="text-gray-600 text-base md:text-lg font-light">
             Learn how to use 50+ Government Services without any risk.
           </p>
 
-          <div className="mt-6 bg-white/10 backdrop-blur-md p-2 rounded-xl flex items-center border border-white/20 max-w-2xl">
-            <Search className="text-white ml-3 opacity-70" size={20} />
+          <div className="mt-6 relative max-w-2xl">
+            <Search
+              className="absolute left-4 top-3.5 text-gray-400"
+              size={20}
+            />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search lessons (e.g., 'How to apply for Pension')..."
-              className="bg-transparentKv border-none outline-none text-white placeholder-indigo-200 ml-3 w-full p-1"
+              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-50 transition-all text-sm"
             />
           </div>
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 md:px-6 mt-8">
+      <div className="max-w-5xl mx-auto px-6 py-8">
         {/* Educational Disclaimer Banner */}
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 rounded-r-lg flex gap-3 items-start shadow-sm">
-          <Info className="text-yellow-600 shrink-0 mt-0.5" size={20} />
+        <div className="bg-blue-50 border border-blue-100 p-4 mb-8 rounded-xl flex gap-3 items-start">
+          <Info className="text-blue-600 shrink-0 mt-0.5" size={20} />
           <div>
-            <h4 className="font-bold text-gray-800 text-sm">
+            <h4 className="font-semibold text-gray-900 text-sm mb-1">
               This is a Training Sandbox
             </h4>
-            <p className="text-sm text-gray-600">
-              Actions taken here are <b>simulations</b>. No real money is
+            <p className="text-sm text-gray-600 font-light leading-relaxed">
+              Actions taken here are{" "}
+              <span className="font-medium">simulations</span>. No real money is
               deducted, and no official forms are submitted. Use this to
               practice safely.
             </p>
@@ -97,15 +101,15 @@ const Services = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar mb-4">
+        <div className="flex gap-2 overflow-x-auto pb-4 mb-6 no-scrollbar">
           {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => setActiveTab(cat.id)}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
                 activeTab === cat.id
-                  ? "bg-indigo-700 text-white shadow-md transform scale-105"
-                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                  ? "bg-blue-600 text-white shadow-sm"
+                  : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300"
               }`}
             >
               {cat.icon}
@@ -116,11 +120,12 @@ const Services = () => {
 
         {/* Results */}
         {loading ? (
-          <div className="text-center py-20 text-gray-500">
-            Loading Practice Modules...
+          <div className="text-center py-20">
+            <div className="inline-block w-8 h-8 border-4 border-gray-200 border-t-blue-600 rounded-full animate-spin mb-4"></div>
+            <p className="text-gray-500 text-sm">Loading Practice Modules...</p>
           </div>
         ) : filteredServices.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredServices.map((service) => (
               <div
                 key={service.id}
@@ -137,46 +142,55 @@ const Services = () => {
                   } else if (service.title.includes("Tele-Medicine")) {
                     navigate("/services/doctors");
                   } else {
-                    // Fallback for demo purposes
                     alert("This learning module is coming soon!");
                   }
                 }}
-                className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-lg hover:border-indigo-200 transition-all duration-200 cursor-pointer group"
+                className="bg-white p-5 rounded-xl border border-gray-100 hover:border-gray-200 hover:shadow-sm transition-all cursor-pointer group"
               >
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`w-14 h-14 rounded-full flex items-center justify-center text-2xl ${service.color} group-hover:scale-110 transition-transform`}
-                  >
-                    {service.icon}
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-gray-800 text-lg">
-                      {service.title}
-                    </h3>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {service.desc}
-                    </p>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex items-start gap-4 flex-1">
+                    <div
+                      className={`w-12 h-12 rounded-lg flex items-center justify-center text-2xl shrink-0 ${service.color} group-hover:scale-105 transition-transform`}
+                    >
+                      {service.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-gray-900 text-base mb-1 group-hover:text-blue-600 transition-colors">
+                        {service.title}
+                      </h3>
+                      <p className="text-xs text-gray-600 leading-relaxed mb-3 font-light">
+                        {service.desc}
+                      </p>
 
-                    {/* Visual Cue that this is a lesson */}
-                    <div className="flex gap-2 mt-2">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-md uppercase tracking-wide">
-                        <BookOpen size={10} /> Tutorial
-                      </span>
-                      <span className="inline-block px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-md">
-                        +50 Pts
-                      </span>
+                      {/* Tags */}
+                      <div className="flex gap-2 flex-wrap">
+                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-gray-50 text-gray-600 text-[10px] font-medium rounded-md uppercase tracking-wide border border-gray-100">
+                          <BookOpen size={10} /> Tutorial
+                        </span>
+                        <span className="inline-block px-2 py-1 bg-green-50 text-green-700 text-[10px] font-medium rounded-md border border-green-100">
+                          +50 Pts
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="bg-gray-50 p-2 rounded-full text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
-                  <ChevronRight size={20} />
+                  <div className="shrink-0">
+                    <div className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                      <ChevronRight size={18} />
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center py-10 text-gray-400">
-            No lessons found matching "{searchTerm}"
+          <div className="text-center py-16 bg-white rounded-xl border border-gray-100">
+            <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
+              <Search className="text-gray-400" size={24} />
+            </div>
+            <p className="text-gray-500 font-medium mb-1">No lessons found</p>
+            <p className="text-gray-400 text-sm">
+              Try adjusting your search or filters
+            </p>
           </div>
         )}
       </div>

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -15,6 +15,7 @@ import {
   User,
   LogOut,
   Globe,
+  BarChart3,
 } from "lucide-react";
 import Home from "./pages/Home";
 import Services from "./pages/Services";
@@ -34,7 +35,7 @@ import Complaint from "./pages/Complaint";
 import OfflineBanner from "./components/OfflineBanner";
 import { useLanguage } from "./context/LanguageContext";
 import DigiLockerSim from "./pages/DigiLockerSim";
-import { syncOfflineActions } from "./utils/offlineSync"; // Import Sync Logic
+import { syncOfflineActions } from "./utils/offlineSync";
 
 // --- Protected Route Wrapper ---
 const ProtectedRoute = ({ children, roleRequired }) => {
@@ -54,6 +55,10 @@ const Sidebar = () => {
   const isActive = (path) => location.pathname === path;
   const { t, lang, setLang } = useLanguage();
 
+  // Get user role
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const isAdmin = user.role === "admin";
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -63,45 +68,55 @@ const Sidebar = () => {
   const NavItem = ({ to, icon: Icon, label }) => (
     <Link
       to={to}
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+      className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all ${
         isActive(to)
-          ? "bg-blue-600 text-white shadow-md"
-          : "text-gray-600 hover:bg-blue-50"
+          ? "bg-blue-600 text-white"
+          : "text-gray-700 hover:bg-gray-50"
       }`}
     >
       <Icon size={20} />
-      <span className="font-medium">{label}</span>
+      <span className="font-medium text-sm">{label}</span>
     </Link>
   );
 
   return (
-    <div className="hidden md:flex flex-col w-64 bg-white border-r border-gray-200 h-screen fixed left-0 top-0 z-50 p-4">
+    <div className="hidden md:flex flex-col w-64 bg-white border-r border-gray-100 h-screen fixed left-0 top-0 z-50 p-4">
       <div className="flex items-center gap-2 px-2 mb-8">
-        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
+        <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-semibold text-sm">
           G
         </div>
-        <span className="text-xl font-bold text-gray-800">GramSathi</span>
+        <span className="text-lg font-semibold text-gray-900">GramSathi</span>
       </div>
 
-      <nav className="space-y-2 flex-1">
-        <NavItem to="/" icon={HomeIcon} label={t("dashboard")} />
-        <NavItem to="/services" icon={Grid} label={t("practice")} />
-        <NavItem to="/learn" icon={BookOpen} label={t("learn")} />
-        <NavItem to="/admin" icon={User} label={t("admin")} />
-        <NavItem to="/profile" icon={User} label={t("profile")} />
+      <nav className="space-y-1 flex-1">
+        {isAdmin ? (
+          // Admin sees only Dashboard and Profile
+          <>
+            <NavItem to="/admin" icon={BarChart3} label="Dashboard" />
+            <NavItem to="/profile" icon={User} label={t("profile")} />
+          </>
+        ) : (
+          // Regular users see all except admin
+          <>
+            <NavItem to="/dashboard" icon={HomeIcon} label={t("dashboard")} />
+            <NavItem to="/services" icon={Grid} label={t("practice")} />
+            <NavItem to="/learn" icon={BookOpen} label={t("learn")} />
+            <NavItem to="/profile" icon={User} label={t("profile")} />
+          </>
+        )}
       </nav>
 
       <div className="px-4 py-4 border-t border-gray-100">
-        <div className="flex items-center justify-between bg-gray-50 p-2 rounded-lg">
+        <div className="flex items-center justify-between bg-gray-50 p-2.5 rounded-lg">
           <div className="flex items-center gap-2 text-gray-600">
             <Globe size={16} />
-            <span className="text-sm font-bold">
+            <span className="text-sm font-medium">
               {lang === "en" ? "English" : "हिंदी"}
             </span>
           </div>
           <button
             onClick={() => setLang(lang === "en" ? "hi" : "en")}
-            className="text-xs bg-white border border-gray-300 px-2 py-1 rounded shadow-sm hover:bg-gray-100"
+            className="text-xs bg-white border border-gray-200 px-2.5 py-1 rounded-md hover:bg-gray-50 transition-colors font-medium"
           >
             Change
           </button>
@@ -111,10 +126,10 @@ const Sidebar = () => {
       <div className="pt-2">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-2 text-red-500 hover:bg-red-50 rounded-xl w-full transition cursor-pointer"
+          className="flex items-center gap-3 px-4 py-2.5 text-red-600 hover:bg-red-50 rounded-lg w-full transition-colors"
         >
           <LogOut size={20} />
-          <span className="font-medium">{t("logout")}</span>
+          <span className="font-medium text-sm">{t("logout")}</span>
         </button>
       </div>
     </div>
@@ -127,6 +142,10 @@ const BottomNav = () => {
   const isActive = (path) => location.pathname === path;
   const { t } = useLanguage();
 
+  // Get user role
+  const user = JSON.parse(localStorage.getItem("user") || "{}");
+  const isAdmin = user.role === "admin";
+
   if (location.pathname.includes("/simulation")) return null;
 
   const NavItem = ({ to, icon: Icon, label }) => (
@@ -136,33 +155,59 @@ const BottomNav = () => {
         isActive(to) ? "text-blue-600" : "text-gray-400"
       }`}
     >
-      <Icon size={24} strokeWidth={isActive(to) ? 2.5 : 2} />
+      <Icon size={22} strokeWidth={isActive(to) ? 2.5 : 2} />
       <span className="text-[10px] font-medium">{label}</span>
     </Link>
   );
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 h-16 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 flex justify-around items-center px-2">
-      <NavItem to="/" icon={HomeIcon} label={t("dashboard")} />
-      <NavItem to="/learn" icon={BookOpen} label={t("learn")} />
-      <NavItem to="/services" icon={Grid} label={t("practice")} />
-      <NavItem to="/profile" icon={User} label={t("profile")} />
+    <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 h-16 z-50 flex justify-around items-center px-2">
+      {isAdmin ? (
+        // Admin mobile nav
+        <>
+          <NavItem to="/admin" icon={BarChart3} label="Dashboard" />
+          <NavItem to="/profile" icon={User} label={t("profile")} />
+        </>
+      ) : (
+        // Regular user mobile nav
+        <>
+          <NavItem to="/dashboard" icon={HomeIcon} label={t("dashboard")} />
+          <NavItem to="/learn" icon={BookOpen} label={t("learn")} />
+          <NavItem to="/services" icon={Grid} label={t("practice")} />
+          <NavItem to="/profile" icon={User} label={t("profile")} />
+        </>
+      )}
     </div>
   );
 };
 
 function App() {
-  // --- GLOBAL OFFLINE SYNC LISTENER ---
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  // Check authentication status on mount and update
+  useEffect(() => {
+    const checkAuth = () => {
+      const token = localStorage.getItem("token");
+      setIsAuthenticated(!!token);
+    };
+
+    checkAuth();
+
+    // Listen for storage changes (for cross-tab sync)
+    window.addEventListener("storage", checkAuth);
+
+    return () => window.removeEventListener("storage", checkAuth);
+  }, []);
+
+  // Global offline sync listener
   useEffect(() => {
     const handleOnline = () => {
       console.log("🌐 Back Online! Attempting sync...");
       syncOfflineActions();
     };
 
-    // Add listener
     window.addEventListener("online", handleOnline);
 
-    // Try sync on initial load (in case we refreshed and are now online)
     if (navigator.onLine) {
       syncOfflineActions();
     }
@@ -172,13 +217,15 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
+      <div className="min-h-screen bg-gray-50 font-sans text-gray-900 antialiased">
         <OfflineBanner />
-        {localStorage.getItem("token") && <Sidebar />}
+
+        {/* Sidebar - Show only when authenticated */}
+        {isAuthenticated && <Sidebar />}
 
         <div
           className={
-            localStorage.getItem("token")
+            isAuthenticated
               ? "md:ml-64 min-h-screen transition-all duration-300"
               : ""
           }
@@ -194,7 +241,10 @@ function App() {
                 )
               }
             />
-            <Route path="/login" element={<Login />} />
+            <Route
+              path="/login"
+              element={<Login setIsAuthenticated={setIsAuthenticated} />}
+            />
             <Route
               path="/dashboard"
               element={
@@ -310,7 +360,8 @@ function App() {
           </Routes>
         </div>
 
-        {localStorage.getItem("token") && <BottomNav />}
+        {/* Bottom Nav - Show only when authenticated */}
+        {isAuthenticated && <BottomNav />}
       </div>
     </Router>
   );
