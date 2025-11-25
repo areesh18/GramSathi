@@ -8,6 +8,7 @@ import {
   Trophy,
   ChevronRight,
   Briefcase,
+  AlertTriangle,
 } from "lucide-react";
 
 const Home = () => {
@@ -180,6 +181,12 @@ const Home = () => {
                 icon: <Briefcase size={24} />,
                 color: "bg-orange-100 text-orange-700",
                 link: "/services/rozgar",
+              },
+              {
+                title: "Complaint",
+                icon: <AlertTriangle size={24} />,
+                color: "bg-rose-100 text-rose-700",
+                link: "/services/complaint",
               },
             ].map((item, idx) => (
               <Link

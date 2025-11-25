@@ -23,6 +23,7 @@ import Doctors from "./pages/Doctors";
 import FormSim from "./pages/FormSim";
 import LandRecords from "./pages/LandRecords";
 import Rozgar from "./pages/Rozgar";
+import Complaint from "./pages/Complaint";
 
 /* // Placeholders
 const Learn = () => <div className="p-8 text-center text-gray-500">Course Library Coming Soon</div>;
@@ -249,6 +250,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Rozgar />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/services/complaint"
+              element={
+                <ProtectedRoute>
+                  <Complaint />
                 </ProtectedRoute>
               }
             />
