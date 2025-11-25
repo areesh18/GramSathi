@@ -8,10 +8,28 @@ const UPISimulation = () => {
   const [amount, setAmount] = useState('');
   const [pin, setPin] = useState('');
   
-  const handleComplete = () => {
-    // In a real app, you'd send this data to your Go backend
-    alert("Lesson Completed! +10 Digital Literacy Points");
-    navigate('/');
+  const handleComplete = async () => {
+    try {
+      const response = await fetch('http://localhost:8080/api/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: 1,        // Hardcoded ID for demo
+          module_id: 'upi',
+          points: 50         // 50 points reward
+        })
+      });
+
+      if (response.ok) {
+        alert("🎉 Success! 50 Points Added to your Profile.");
+        navigate('/');
+      } else {
+        alert("Error saving progress");
+      }
+    } catch (error) {
+      console.error("Backend offline?", error);
+      alert("Could not connect to server");
+    }
   };
 
   return (

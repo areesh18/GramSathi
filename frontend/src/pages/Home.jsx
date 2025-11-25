@@ -1,8 +1,17 @@
 import React from 'react';
+import  { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom'; // Import Link
-import { Bell, MapPin, Shield, Smartphone } from 'lucide-react'; // Import Smartphone icon
+import { Bell, MapPin, Shield, Smartphone, Trophy } from 'lucide-react'; // Import Smartphone icon
 
 const Home = () => {
+    const [user, setUser] = useState({ name: "Loading...", score: 0 });
+    // Fetch User Data on Load
+  useEffect(() => {
+    fetch('http://localhost:8080/api/user')
+      .then(res => res.json())
+      .then(data => setUser({ name: data.name, score: data.total_score }))
+      .catch(err => console.error("Failed to fetch user", err));
+  }, []);
   return (
     <div className="pb-24 bg-gray-50 min-h-screen">
       {/* Top Header */}
@@ -11,6 +20,11 @@ const Home = () => {
           <div>
             <p className="text-blue-200 text-sm font-medium">Namaste, Rajesh 🙏</p>
             <h1 className="text-2xl font-bold">GramSathi</h1>
+          </div>
+          {/* LIVE SCORE DISPLAY */}
+          <div className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-2 border border-white/30">
+            <Trophy size={16} className="text-yellow-300" />
+            <span className="font-bold">{user.score} Pts</span>
           </div>
           <div className="bg-blue-600 p-2 rounded-full relative">
             <Bell size={20} />
