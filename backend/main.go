@@ -163,6 +163,7 @@ func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 		"villages":    villageStats,
 	})
 }
+
 // --- NEW HANDLER ---
 func GetSchemes(w http.ResponseWriter, r *http.Request) {
 	var schemes []Scheme
@@ -173,6 +174,7 @@ func GetSchemes(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(schemes)
 }
+
 // --- MIDDLEWARE ---
 func IsAuthorized(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -207,7 +209,8 @@ func main() {
 	r.HandleFunc("/api/schemes", IsAuthorized(GetSchemes)).Methods("GET")
 
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"},
+		// CHANGE THIS LINE:
+		AllowedOrigins:   []string{"*"}, 
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
