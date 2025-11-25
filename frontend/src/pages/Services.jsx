@@ -6,7 +6,7 @@ import {
   Sprout,
   ChevronRight,
   BookOpen, // Added icon
-  Info      // Added icon
+  Info, // Added icon
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -55,10 +55,14 @@ const Services = () => {
       <div className="bg-gradient-to-r from-indigo-700 to-purple-800 p-8 md:p-12 rounded-b-[2rem] md:rounded-none text-white shadow-lg">
         <div className="max-w-5xl mx-auto">
           <div className="flex items-center gap-3 mb-2 opacity-90">
-             <BookOpen size={20} className="text-yellow-300"/>
-             <span className="font-bold text-yellow-300 uppercase tracking-wider text-sm">Practice Mode</span>
+            <BookOpen size={20} className="text-yellow-300" />
+            <span className="font-bold text-yellow-300 uppercase tracking-wider text-sm">
+              Practice Mode
+            </span>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">Service Simulator 🇮🇳</h1>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">
+            Service Simulator 🇮🇳
+          </h1>
           <p className="text-indigo-100 text-base md:text-lg">
             Learn how to use 50+ Government Services without any risk.
           </p>
@@ -79,14 +83,17 @@ const Services = () => {
       <div className="max-w-5xl mx-auto px-4 md:px-6 mt-8">
         {/* Educational Disclaimer Banner */}
         <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 rounded-r-lg flex gap-3 items-start shadow-sm">
-            <Info className="text-yellow-600 shrink-0 mt-0.5" size={20} />
-            <div>
-                <h4 className="font-bold text-gray-800 text-sm">This is a Training Sandbox</h4>
-                <p className="text-sm text-gray-600">
-                    Actions taken here are <b>simulations</b>. No real money is deducted, and no official forms are submitted. 
-                    Use this to practice safely.
-                </p>
-            </div>
+          <Info className="text-yellow-600 shrink-0 mt-0.5" size={20} />
+          <div>
+            <h4 className="font-bold text-gray-800 text-sm">
+              This is a Training Sandbox
+            </h4>
+            <p className="text-sm text-gray-600">
+              Actions taken here are <b>simulations</b>. No real money is
+              deducted, and no official forms are submitted. Use this to
+              practice safely.
+            </p>
+          </div>
         </div>
 
         {/* Tabs */}
@@ -123,13 +130,15 @@ const Services = () => {
                     navigate("/simulation/form");
                   } else if (service.title.includes("UPI")) {
                     navigate("/simulation/upi");
+                  } else if (service.title.includes("DigiLocker")) {
+                    navigate("/simulation/digilocker");
                   } else if (service.title.includes("Mandi")) {
                     navigate("/services/mandi");
                   } else if (service.title.includes("Tele-Medicine")) {
                     navigate("/services/doctors");
                   } else {
-                     // Fallback for demo purposes
-                     alert("This learning module is coming soon!");
+                    // Fallback for demo purposes
+                    alert("This learning module is coming soon!");
                   }
                 }}
                 className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-lg hover:border-indigo-200 transition-all duration-200 cursor-pointer group"
@@ -147,13 +156,13 @@ const Services = () => {
                     <p className="text-xs text-gray-500 mt-0.5">
                       {service.desc}
                     </p>
-                    
+
                     {/* Visual Cue that this is a lesson */}
                     <div className="flex gap-2 mt-2">
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-md uppercase tracking-wide">
-                            <BookOpen size={10} /> Tutorial
-                        </span>
-                        <span className="inline-block px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-md">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-md uppercase tracking-wide">
+                        <BookOpen size={10} /> Tutorial
+                      </span>
+                      <span className="inline-block px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-md">
                         +50 Pts
                       </span>
                     </div>

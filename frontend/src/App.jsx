@@ -8,7 +8,14 @@ import {
   useNavigate,
   Navigate,
 } from "react-router-dom";
-import { Home as HomeIcon, BookOpen, Grid, User, LogOut, Globe } from "lucide-react"; // Added Globe icon
+import {
+  Home as HomeIcon,
+  BookOpen,
+  Grid,
+  User,
+  LogOut,
+  Globe,
+} from "lucide-react"; // Added Globe icon
 import Home from "./pages/Home";
 import Services from "./pages/Services";
 import UPISimulation from "./pages/Simulation";
@@ -24,8 +31,9 @@ import FormSim from "./pages/FormSim";
 import LandRecords from "./pages/LandRecords";
 import Rozgar from "./pages/Rozgar";
 import Complaint from "./pages/Complaint";
-import OfflineBanner from './components/OfflineBanner';
-import { useLanguage } from './context/LanguageContext'; 
+import OfflineBanner from "./components/OfflineBanner";
+import { useLanguage } from "./context/LanguageContext";
+import DigiLockerSim from "./pages/DigiLockerSim";
 
 // --- Protected Route Wrapper ---
 const ProtectedRoute = ({ children, roleRequired }) => {
@@ -41,7 +49,7 @@ const ProtectedRoute = ({ children, roleRequired }) => {
 // --- DESKTOP SIDEBAR ---
 const Sidebar = () => {
   const location = useLocation();
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const isActive = (path) => location.pathname === path;
   const { t, lang, setLang } = useLanguage(); // Get setLang
 
@@ -75,27 +83,29 @@ const Sidebar = () => {
       </div>
 
       <nav className="space-y-2 flex-1">
-        <NavItem to="/" icon={HomeIcon} label={t('dashboard')} />
-        <NavItem to="/services" icon={Grid} label={t('practice')} />
-        <NavItem to="/learn" icon={BookOpen} label={t('learn')} />
-        <NavItem to="/admin" icon={User} label={t('admin')} />
-        <NavItem to="/profile" icon={User} label={t('profile')} />
+        <NavItem to="/" icon={HomeIcon} label={t("dashboard")} />
+        <NavItem to="/services" icon={Grid} label={t("practice")} />
+        <NavItem to="/learn" icon={BookOpen} label={t("learn")} />
+        <NavItem to="/admin" icon={User} label={t("admin")} />
+        <NavItem to="/profile" icon={User} label={t("profile")} />
       </nav>
 
       {/* NATIVE LANGUAGE TOGGLE (Visible Offline) */}
       <div className="px-4 py-4 border-t border-gray-100">
-         <div className="flex items-center justify-between bg-gray-50 p-2 rounded-lg">
-            <div className="flex items-center gap-2 text-gray-600">
-                <Globe size={16} />
-                <span className="text-sm font-bold">{lang === 'en' ? 'English' : 'हिंदी'}</span>
-            </div>
-            <button 
-                onClick={() => setLang(lang === 'en' ? 'hi' : 'en')}
-                className="text-xs bg-white border border-gray-300 px-2 py-1 rounded shadow-sm hover:bg-gray-100"
-            >
-                Change
-            </button>
-         </div>
+        <div className="flex items-center justify-between bg-gray-50 p-2 rounded-lg">
+          <div className="flex items-center gap-2 text-gray-600">
+            <Globe size={16} />
+            <span className="text-sm font-bold">
+              {lang === "en" ? "English" : "हिंदी"}
+            </span>
+          </div>
+          <button
+            onClick={() => setLang(lang === "en" ? "hi" : "en")}
+            className="text-xs bg-white border border-gray-300 px-2 py-1 rounded shadow-sm hover:bg-gray-100"
+          >
+            Change
+          </button>
+        </div>
       </div>
 
       <div className="pt-2">
@@ -104,7 +114,7 @@ const Sidebar = () => {
           className="flex items-center gap-3 px-4 py-2 text-red-500 hover:bg-red-50 rounded-xl w-full transition cursor-pointer"
         >
           <LogOut size={20} />
-          <span className="font-medium">{t('logout')}</span>
+          <span className="font-medium">{t("logout")}</span>
         </button>
       </div>
     </div>
@@ -133,10 +143,10 @@ const BottomNav = () => {
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 h-16 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 flex justify-around items-center px-2">
-      <NavItem to="/" icon={HomeIcon} label={t('dashboard')} />
-      <NavItem to="/learn" icon={BookOpen} label={t('learn')} />
-      <NavItem to="/services" icon={Grid} label={t('practice')} />
-      <NavItem to="/profile" icon={User} label={t('profile')} />
+      <NavItem to="/" icon={HomeIcon} label={t("dashboard")} />
+      <NavItem to="/learn" icon={BookOpen} label={t("learn")} />
+      <NavItem to="/services" icon={Grid} label={t("practice")} />
+      <NavItem to="/profile" icon={User} label={t("profile")} />
     </div>
   );
 };
@@ -268,6 +278,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Complaint />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/simulation/digilocker"
+              element={
+                <ProtectedRoute>
+                  <DigiLockerSim />
                 </ProtectedRoute>
               }
             />
