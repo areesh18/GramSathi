@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -15,7 +15,7 @@ import {
   User,
   LogOut,
   Globe,
-} from "lucide-react"; // Added Globe icon
+} from "lucide-react";
 import Home from "./pages/Home";
 import Services from "./pages/Services";
 import UPISimulation from "./pages/Simulation";
@@ -34,6 +34,7 @@ import Complaint from "./pages/Complaint";
 import OfflineBanner from "./components/OfflineBanner";
 import { useLanguage } from "./context/LanguageContext";
 import DigiLockerSim from "./pages/DigiLockerSim";
+import { syncOfflineActions } from "./utils/offlineSync"; // Import Sync Logic
 
 // --- Protected Route Wrapper ---
 const ProtectedRoute = ({ children, roleRequired }) => {
@@ -51,7 +52,7 @@ const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const isActive = (path) => location.pathname === path;
-  const { t, lang, setLang } = useLanguage(); // Get setLang
+  const { t, lang, setLang } = useLanguage();
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -90,7 +91,6 @@ const Sidebar = () => {
         <NavItem to="/profile" icon={User} label={t("profile")} />
       </nav>
 
-      {/* NATIVE LANGUAGE TOGGLE (Visible Offline) */}
       <div className="px-4 py-4 border-t border-gray-100">
         <div className="flex items-center justify-between bg-gray-50 p-2 rounded-lg">
           <div className="flex items-center gap-2 text-gray-600">
@@ -152,6 +152,24 @@ const BottomNav = () => {
 };
 
 function App() {
+  // --- GLOBAL OFFLINE SYNC LISTENER ---
+  useEffect(() => {
+    const handleOnline = () => {
+      console.log("🌐 Back Online! Attempting sync...");
+      syncOfflineActions();
+    };
+
+    // Add listener
+    window.addEventListener("online", handleOnline);
+
+    // Try sync on initial load (in case we refreshed and are now online)
+    if (navigator.onLine) {
+      syncOfflineActions();
+    }
+
+    return () => window.removeEventListener("online", handleOnline);
+  }, []);
+
   return (
     <Router>
       <div className="min-h-screen bg-gray-50 font-sans text-gray-900">

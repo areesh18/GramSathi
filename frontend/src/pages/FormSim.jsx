@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -6,9 +6,10 @@ import {
   Upload,
   User,
   FileText,
-  CreditCard,
   AlertCircle,
+  Volume2,
 } from "lucide-react";
+import { saveOfflineAction, speak } from "../utils/offlineSync";
 
 const FormSim = () => {
   const navigate = useNavigate();
@@ -20,82 +21,94 @@ const FormSim = () => {
   });
   const [error, setError] = useState("");
 
-  // --- ANALYTICS HELPER ---
-  const logFailure = (action) => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    const token = localStorage.getItem("token");
-    if (!storedUser || !token || token === "guest-token") return;
+  // Audio helper
+  const playHelp = (text) => speak(text, "hi-IN");
 
-    fetch("http://localhost:8080/api/log", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        user_id: storedUser.id,
-        module_id: "sim_pm_kisan", // Same ID as your dashboard expects
-        action: action, // e.g., 'failed_upload_validation'
-      }),
-    }).catch((err) => console.log("Log failed", err));
-  };
-  // ------------------------
+  useEffect(() => {
+    playHelp("Pradhan Mantri Kisan Yojana form mein swagat hai.");
+  }, []);
 
   const handleNext = () => {
     setError("");
 
-    // Validation Logic
     if (step === 2 && formData.aadhaar.length < 12) {
-      setError("Aadhaar must be 12 digits.");
+      const msg = "Aadhaar number 12 ank ka hona chahiye.";
+      setError(msg);
+      playHelp(msg);
       return;
     }
 
     if (step === 3 && !formData.hasUploaded) {
-      setError("Please upload the 7/12 extract photo first.");
-      logFailure("failed_upload_attempt"); // <--- LOGGING THE STRUGGLE
+      const msg = "Kripya pehle zameen ke kagaz ki photo upload karein.";
+      setError(msg);
+      playHelp(msg);
       return;
     }
 
     setStep(step + 1);
+
+    // Step specific audio hints
+    if (step === 1) playHelp("Apna Aadhaar number darj karein.");
+    if (step === 2) playHelp("Apne khet ke kagaz ki photo khinchein.");
+    if (step === 3) playHelp("Sabhi jaankari check karein aur submit karein.");
   };
 
   const submitForm = async () => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     const token = localStorage.getItem("token");
 
-    try {
-      // 1. Log Success
-      if (token && token !== "guest-token") {
-        await fetch("http://localhost:8080/api/progress", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            user_id: storedUser.id,
-            module_id: "sim_pm_kisan",
-            points: 50,
-          }),
-        });
+    const payload = {
+      user_id: storedUser.id,
+      module_id: "sim_pm_kisan",
+      points: 50,
+    };
+
+    // Robust Submit Logic: Offline First Approach
+    if (!navigator.onLine) {
+      // 1. Offline
+      saveOfflineAction("/api/progress", "POST", payload);
+      alert(
+        "📝 Form Saved Offline! It will submit automatically when internet returns."
+      );
+    } else {
+      // 2. Online
+      try {
+        if (token && token !== "guest-token") {
+          await fetch("http://localhost:8080/api/progress", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          });
+        }
+        alert("🎉 Application Submitted! You earned 50 Points.");
+      } catch (err) {
+        console.error("Submission failed, queuing offline", err);
+        saveOfflineAction("/api/progress", "POST", payload);
+        alert("⚠️ Server unreachable. Saved offline for later sync.");
       }
-      navigate("/services");
-      alert("🎉 Practice Application Submitted! You earned 50 Points.");
-    } catch (err) {
-      console.error(err);
-      alert("Submitted offline!");
-      navigate("/services");
     }
+    navigate("/services");
   };
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans pb-20">
       <div className="bg-green-700 p-6 text-white rounded-b-3xl shadow-lg">
-        <div className="flex items-center gap-3 mb-4">
-          <button onClick={() => navigate(-1)}>
-            <ArrowLeft />
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate(-1)}>
+              <ArrowLeft />
+            </button>
+            <h1 className="text-xl font-bold">PM Kisan Form</h1>
+          </div>
+          <button
+            onClick={() => playHelp("Kripya step by step form bharein.")}
+            className="bg-white/20 p-2 rounded-full hover:bg-white/30 active:scale-95"
+          >
+            <Volume2 size={20} />
           </button>
-          <h1 className="text-xl font-bold">PM Kisan Practice Form</h1>
         </div>
 
         <div className="flex justify-between items-center px-4">
@@ -196,14 +209,14 @@ const FormSim = () => {
           </div>
         )}
 
-        {/* STEP 3: DOCUMENT UPLOAD (With Analytics) */}
+        {/* STEP 3: DOCUMENT UPLOAD */}
         {step === 3 && (
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 animate-in slide-in-from-right">
             <h2 className="text-lg font-bold text-gray-800 mb-2">
               Step 3: Land Record
             </h2>
             <p className="text-gray-500 text-sm mb-6">
-              Take a photo of your land document.
+              Take a photo of your land document (7/12).
             </p>
 
             <div

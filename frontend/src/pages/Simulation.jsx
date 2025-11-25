@@ -4,11 +4,12 @@ import {
   ArrowLeft,
   Camera,
   Check,
-  Smartphone,
   CreditCard,
   WifiOff,
   Wallet,
+  Volume2, // Added Icon
 } from "lucide-react";
+import { saveOfflineAction, speak } from "../utils/offlineSync"; // Import Utils
 
 const UPISimulation = () => {
   const navigate = useNavigate();
@@ -17,50 +18,19 @@ const UPISimulation = () => {
   const [pin, setPin] = useState("");
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [mode, setMode] = useState("pay"); // 'pay' or 'balance'
-  // --- NEW: Activity Logger ---
-  const logActivity = (action) => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
-    const token = localStorage.getItem("token");
 
-    // Don't log if guest or offline (we will add sync later)
-    if (isOffline || !token || token === "guest-token") return;
-
-    fetch("http://localhost:8080/api/log", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        user_id: storedUser.id,
-        module_id: "upi",
-        action: action,
-      }),
-    }).catch((err) => console.log("Log failed", err));
-  };
-
-  const handlePinSubmit = (enteredPin) => {
-    // Use the passed value 'enteredPin' instead of the state 'pin'
-    if (enteredPin === "1234") {
-      if (mode === "pay") {
-        setTimeout(() => setStep(5), 300); // Success Pay
-      } else {
-        setTimeout(() => setStep(6), 300); // Success Balance
-      }
-    } else {
-      logActivity("failed_pin");
-      alert("Wrong PIN! Try 1234.");
-      setPin("");
-    }
-  };
+  // --- Audio Helper ---
+  const playGuide = (text) => speak(text, "hi-IN");
 
   useEffect(() => {
     const handleStatus = () => setIsOffline(!navigator.onLine);
     window.addEventListener("online", handleStatus);
     window.addEventListener("offline", handleStatus);
 
-    // Log start
-    logActivity("started");
+    // Initial Welcome Audio
+    playGuide(
+      "UPI practice mein swagat hai. Shuru karne ke liye button dabayein."
+    );
 
     return () => {
       window.removeEventListener("online", handleStatus);
@@ -68,17 +38,48 @@ const UPISimulation = () => {
     };
   }, []);
 
+  const handlePinSubmit = (enteredPin) => {
+    if (enteredPin === "1234") {
+      if (mode === "pay") {
+        setTimeout(() => setStep(5), 300); // Success Pay
+      } else {
+        setTimeout(() => setStep(6), 300); // Success Balance
+      }
+    } else {
+      playGuide("Galat PIN. Kripya phir se koshish karein.");
+      alert("Wrong PIN! Try 1234.");
+      setPin("");
+    }
+  };
+
+  // --- ROBUST COMPLETION LOGIC ---
   const handleComplete = async () => {
-    logActivity("completed"); // Log success
     const storedUser = JSON.parse(localStorage.getItem("user"));
     const token = localStorage.getItem("token");
+    const payload = {
+      user_id: storedUser.id,
+      module_id: "upi",
+      points: 50,
+    };
 
-    if (isOffline || !token || token === "guest-token") {
-      alert("🎉 Practice Complete! (Offline Mode - Points will sync later)");
-      navigate("/dashboard");
+    // 1. Check Token
+    if (!token || token === "guest-token") {
+      alert("🎉 Practice Complete! (Guest Mode)");
+      navigate("/");
       return;
     }
 
+    // 2. Offline Handling
+    if (isOffline) {
+      saveOfflineAction("/api/progress", "POST", payload);
+      alert(
+        "🎉 Saved Offline! Points will add automatically when internet returns."
+      );
+      navigate("/");
+      return;
+    }
+
+    // 3. Online Handling with Fallback
     try {
       const response = await fetch("http://localhost:8080/api/progress", {
         method: "POST",
@@ -86,41 +87,46 @@ const UPISimulation = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          user_id: storedUser.id,
-          module_id: "upi",
-          points: 50,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
         alert("🎉 Success! 50 Points Added to your Profile.");
-        navigate("/");
       } else {
-        alert("Practice Complete! (Server Unreachable)");
-        navigate("/");
+        // Server error, fallback to queue
+        throw new Error("Server error");
       }
     } catch (error) {
-      console.error("Backend offline?", error);
-      alert("Practice Complete! (Offline Mode)");
-      navigate("/");
+      console.error("Backend unreachable, queuing offline.", error);
+      saveOfflineAction("/api/progress", "POST", payload);
+      alert("🎉 Saved Offline! Will sync later.");
     }
+    navigate("/");
   };
 
   return (
     <div className="min-h-screen bg-gray-900 flex justify-center items-center md:p-8">
       <div className="w-full max-w-md bg-gray-50 md:rounded-3xl md:shadow-2xl md:border-8 md:border-gray-800 overflow-hidden min-h-screen md:min-h-[800px] md:h-[800px] relative flex flex-col">
-        {/* Top Bar */}
-        <div className="bg-blue-700 p-4 text-white flex items-center gap-3 shadow-md z-10">
-          <button onClick={() => navigate("/")}>
-            <ArrowLeft />
+        {/* Top Bar with Audio Button */}
+        <div className="bg-blue-700 p-4 text-white flex items-center justify-between shadow-md z-10">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate("/")}>
+              <ArrowLeft />
+            </button>
+            <h1 className="font-bold">
+              Practice Mode {isOffline && "(Offline)"}
+            </h1>
+          </div>
+          <button
+            onClick={() => playGuide("Instruction replay...")}
+            className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition active:scale-95"
+            aria-label="Play Audio Instructions"
+          >
+            <Volume2 size={20} />
           </button>
-          <h1 className="font-bold">
-            Practice Mode {isOffline && "(Offline)"}
-          </h1>
         </div>
 
-        {/* --- STEP 1: HOME SCREEN (Choose Pay or Balance) --- */}
+        {/* --- STEP 1: HOME SCREEN --- */}
         {step === 1 && (
           <div className="flex-1 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500 gap-6">
             <div className="bg-blue-50 p-6 rounded-2xl border border-blue-100 w-full">
@@ -135,6 +141,7 @@ const UPISimulation = () => {
                 onClick={() => {
                   setMode("pay");
                   setStep(2);
+                  playGuide("Payment karne ke liye, QR code scan karein.");
                 }}
                 className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg mb-4 flex items-center justify-center gap-3 active:scale-95 transition"
               >
@@ -145,16 +152,19 @@ const UPISimulation = () => {
                 onClick={() => {
                   setMode("balance");
                   setStep(4);
-                }} // Jump straight to PIN
+                  playGuide("Apna PIN daalein balance check karne ke liye.");
+                }}
                 className="w-full bg-white text-blue-600 border-2 border-blue-600 py-4 rounded-xl font-bold shadow-sm flex items-center justify-center gap-3 active:scale-95 transition"
               >
                 <Wallet size={24} /> Check Balance
               </button>
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-gray-400">
-              <WifiOff size={12} /> Works without internet
-            </div>
+            {isOffline && (
+              <div className="flex items-center gap-2 text-xs text-red-500 font-bold bg-red-50 px-3 py-1 rounded-full">
+                <WifiOff size={12} /> Offline Mode Active
+              </div>
+            )}
           </div>
         )}
 
@@ -166,28 +176,23 @@ const UPISimulation = () => {
             </div>
 
             <div
-              onClick={() => setStep(3)}
+              onClick={() => {
+                setStep(3);
+                playGuide("Ab amount bharein.");
+              }}
               className="w-72 h-72 border-4 border-green-500 rounded-3xl bg-white/10 backdrop-blur-sm cursor-pointer relative overflow-hidden group"
             >
-              {/* Fake QR - Handle Offline Case */}
-              {isOffline ? (
-                <div className="w-full h-full bg-white p-6 flex items-center justify-center">
-                  <div className="border-4 border-black p-2">
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="w-10 h-10 bg-black"></div>
-                      <div className="w-10 h-10 bg-black"></div>
-                      <div className="w-10 h-10 bg-black"></div>
-                      <div className="w-10 h-10 bg-gray-300"></div>
-                    </div>
+              {/* Use simple divs for QR representation if offline or fallback image */}
+              <div className="w-full h-full bg-white p-6 flex items-center justify-center opacity-80">
+                <div className="border-4 border-black p-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="w-10 h-10 bg-black"></div>
+                    <div className="w-10 h-10 bg-black"></div>
+                    <div className="w-10 h-10 bg-black"></div>
+                    <div className="w-10 h-10 bg-gray-300"></div>
                   </div>
                 </div>
-              ) : (
-                <img
-                  src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=GramSathiDemo"
-                  alt="Scan Me"
-                  className="opacity-80 w-full h-full p-6 bg-white"
-                />
-              )}
+              </div>
 
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-active:bg-black/20">
                 <span className="bg-white text-black px-6 py-2 rounded-full font-bold shadow-lg scale-110 animate-pulse">
@@ -195,11 +200,7 @@ const UPISimulation = () => {
                 </span>
               </div>
             </div>
-            {isOffline && (
-              <p className="text-white mt-4 text-sm">
-                <WifiOff className="inline w-4 h-4 mr-1" /> Offline QR Mode
-              </p>
-            )}
+
             <button
               onClick={() => setStep(1)}
               className="mt-12 text-white opacity-70"
@@ -243,7 +244,10 @@ const UPISimulation = () => {
 
             <button
               disabled={!amount}
-              onClick={() => setStep(4)}
+              onClick={() => {
+                setStep(4);
+                playGuide("Apna 4 digit ka UPI PIN enter karein.");
+              }}
               className={`w-full py-4 rounded-xl font-bold text-white text-lg shadow-lg transition-all active:scale-95 ${
                 amount ? "bg-blue-600" : "bg-gray-300 cursor-not-allowed"
               }`}
@@ -253,7 +257,7 @@ const UPISimulation = () => {
           </div>
         )}
 
-        {/* --- STEP 4: COMMON PIN ENTRY (Fixed Logic) --- */}
+        {/* --- STEP 4: COMMON PIN ENTRY --- */}
         {step === 4 && (
           <div className="fixed inset-0 bg-white z-50 flex flex-col animate-in slide-in-from-bottom duration-300">
             <div className="p-6 bg-gray-50 flex-1 flex flex-col items-center justify-center">
@@ -289,8 +293,6 @@ const UPISimulation = () => {
                   onClick={() => {
                     const newPin = pin + num;
                     if (newPin.length <= 4) setPin(newPin);
-
-                    // FIX: Pass 'newPin' directly to the function
                     if (newPin.length === 4) {
                       setTimeout(() => handlePinSubmit(newPin), 100);
                     }
@@ -305,8 +307,6 @@ const UPISimulation = () => {
                 onClick={() => {
                   const newPin = pin + "0";
                   if (newPin.length <= 4) setPin(newPin);
-
-                  // FIX: Pass 'newPin' directly to the function
                   if (newPin.length === 4) {
                     setTimeout(() => handlePinSubmit(newPin), 100);
                   }
@@ -336,20 +336,6 @@ const UPISimulation = () => {
               Transaction ID: #839201
             </p>
 
-            <div className="bg-green-700/50 p-4 rounded-xl w-full max-w-sm mb-8 border border-green-500/30 backdrop-blur-md">
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm opacity-90 font-medium">
-                  Reward Earned
-                </span>
-                <span className="font-bold text-yellow-300 text-lg">
-                  ★ 50 pts
-                </span>
-              </div>
-              <div className="h-3 bg-green-900/30 rounded-full overflow-hidden">
-                <div className="h-full bg-yellow-400 w-3/4 animate-pulse"></div>
-              </div>
-            </div>
-
             <button
               onClick={handleComplete}
               className="bg-white text-green-700 w-full max-w-sm py-4 rounded-xl font-bold shadow-xl hover:bg-gray-50 transition-colors"
@@ -358,6 +344,7 @@ const UPISimulation = () => {
             </button>
           </div>
         )}
+
         {/* --- STEP 6: BALANCE VIEW --- */}
         {step === 6 && (
           <div className="fixed inset-0 bg-blue-600 z-50 flex flex-col items-center justify-center text-white p-6 animate-in zoom-in duration-300">
