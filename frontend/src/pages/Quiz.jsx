@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle, XCircle, Award } from "lucide-react";
 import { saveOfflineAction } from "../utils/offlineSync";
+
 const Quiz = () => {
   const navigate = useNavigate();
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -55,25 +56,29 @@ const Quiz = () => {
       setShowResult(true);
     }
   };
-  const payload = {
-    user_id: storedUser.id,
-    module_id: "quiz_literacy_101",
-    points: finalScore * 10, // 10 points per correct answer
-  };
 
-  // --- ADDED OFFLINE LOGIC ---
-  if (!navigator.onLine) {
-    saveOfflineAction("/api/progress", "POST", payload);
-    alert("Quiz score saved offline! Will sync automatically.");
-    return;
-  }
   const submitScore = async (finalScore) => {
     // Only save if they pass (e.g., > 1 correct)
     if (finalScore < 2) return;
 
+    // --- CORRECT SCOPE: Define variables here ---
     const storedUser = JSON.parse(localStorage.getItem("user"));
     const token = localStorage.getItem("token");
 
+    const payload = {
+      user_id: storedUser.id,
+      module_id: "quiz_literacy_101",
+      points: finalScore * 10, // 10 points per correct answer
+    };
+
+    // --- CORRECT SCOPE: Offline check logic ---
+    if (!navigator.onLine) {
+      saveOfflineAction("/api/progress", "POST", payload);
+      alert("Quiz score saved offline! Will sync automatically.");
+      return;
+    }
+
+    // --- Online Submission Logic ---
     try {
       await fetch("http://localhost:8080/api/progress", {
         method: "POST",
