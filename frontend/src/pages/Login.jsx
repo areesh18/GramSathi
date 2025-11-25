@@ -1,18 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Mail, ArrowRight } from 'lucide-react';
+import { Lock, Mail, ArrowRight, User, MapPin } from 'lucide-react';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isRegister, setIsRegister] = useState(false); // Toggle Login/Register
+  
+  // New States for Registration
+  const [name, setName] = useState('');
+  const [village, setVillage] = useState('');
+  
+  const [isRegister, setIsRegister] = useState(false);
   const navigate = useNavigate();
 
   const handleAuth = async (e) => {
     e.preventDefault();
     const endpoint = isRegister ? 'register' : 'login';
+    
+    // Payload now uses the actual state values
     const payload = isRegister 
-      ? { name: "New User", email, password, role: "user", village: "Rampur" } // Default values for hackathon
+      ? { name, email, password, role: "user", village: village || "Unknown" } 
       : { email, password };
 
     try {
@@ -25,14 +32,12 @@ const Login = () => {
       if (res.ok) {
         if (isRegister) {
           alert("Registration Successful! Please Login.");
-          setIsRegister(false);
+          setIsRegister(false); // Switch back to login mode
         } else {
           const data = await res.json();
-          // STORE TOKEN & USER INFO
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
           
-          // Redirect based on Role
           if (data.user.role === 'admin') {
             navigate('/admin');
           } else {
@@ -40,7 +45,7 @@ const Login = () => {
           }
         }
       } else {
-        alert("Authentication Failed");
+        alert("Authentication Failed. Please check your credentials.");
       }
     } catch (err) {
       console.error(err);
@@ -57,7 +62,37 @@ const Login = () => {
             <p className="text-gray-500">{isRegister ? "Join the community" : "Welcome back"}</p>
           </div>
 
-          <form onSubmit={handleAuth} className="space-y-6">
+          <form onSubmit={handleAuth} className="space-y-4">
+            
+            {/* --- NEW FIELDS: Only show when Registering --- */}
+            {isRegister && (
+              <>
+                <div className="relative animate-in slide-in-from-top duration-300">
+                  <User className="absolute left-4 top-3.5 text-gray-400" size={20} />
+                  <input 
+                    type="text" 
+                    placeholder="Full Name" 
+                    className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="relative animate-in slide-in-from-top duration-300 delay-100">
+                  <MapPin className="absolute left-4 top-3.5 text-gray-400" size={20} />
+                  <input 
+                    type="text" 
+                    placeholder="Village Name" 
+                    className="w-full pl-12 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition"
+                    value={village}
+                    onChange={(e) => setVillage(e.target.value)}
+                    required
+                  />
+                </div>
+              </>
+            )}
+
+            {/* --- Standard Fields --- */}
             <div className="relative">
               <Mail className="absolute left-4 top-3.5 text-gray-400" size={20} />
               <input 
@@ -82,14 +117,20 @@ const Login = () => {
               />
             </div>
 
-            <button className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition shadow-lg flex items-center justify-center gap-2">
+            <button className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-blue-700 transition shadow-lg flex items-center justify-center gap-2 mt-6">
               {isRegister ? "Create Account" : "Login Securely"} <ArrowRight size={20} />
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <button 
-              onClick={() => setIsRegister(!isRegister)}
+              onClick={() => {
+                setIsRegister(!isRegister);
+                // Clear fields when switching to prevent confusion
+                setName('');
+                setVillage('');
+                setPassword(''); 
+              }}
               className="text-blue-600 font-medium hover:underline"
             >
               {isRegister ? "Already have an account? Login" : "New here? Register"}

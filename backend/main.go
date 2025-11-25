@@ -32,25 +32,52 @@ type Claims struct {
 
 // 1. REGISTER (Create User/Admin)
 func Register(w http.ResponseWriter, r *http.Request) {
-	var user User
-	json.NewDecoder(r.Body).Decode(&user)
+    // Define a struct specifically for decoding the request
+    // This allows us to read the password despite the json:"-" tag in the User model
+    var req struct {
+        Name     string `json:"name"`
+        Email    string `json:"email"`
+        Password string `json:"password"`
+        Role     string `json:"role"`
+        Village  string `json:"village"`
+    }
 
-	// Hash Password
-	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-	user.Password = string(hashedPassword)
-	
-	// Set default role if empty
-	if user.Role == "" {
-		user.Role = "user"
-	}
+    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+        http.Error(w, "Invalid request payload", http.StatusBadRequest)
+        return
+    }
 
-	if result := DB.Create(&user); result.Error != nil {
-		http.Error(w, "Email already exists", http.StatusBadRequest)
-		return
-	}
-	
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(map[string]string{"message": "User registered!"})
+    // Hash Password
+    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+    if err != nil {
+        http.Error(w, "Server error", http.StatusInternalServerError)
+        return
+    }
+
+    // Map to the real User model
+    user := User{
+        Name:     req.Name,
+        Email:    req.Email,
+        Password: string(hashedPassword), // Save the hash
+        Role:     req.Role,
+        Village:  req.Village,
+        // Default values
+        TotalScore: 0, 
+        CreatedAt:  time.Now(),
+    }
+    
+    // Set default role if empty
+    if user.Role == "" {
+        user.Role = "user"
+    }
+
+    if result := DB.Create(&user); result.Error != nil {
+        http.Error(w, "Email already exists", http.StatusBadRequest)
+        return
+    }
+    
+    w.WriteHeader(http.StatusCreated)
+    json.NewEncoder(w).Encode(map[string]string{"message": "User registered!"})
 }
 
 // 2. LOGIN (Generate Token)
