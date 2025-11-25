@@ -192,7 +192,7 @@ const Profile = ({ onReplayTutorial }) => {
                 {/* CERTIFICATE FRAME */}
                 <div
                   ref={certificateRef}
-                  className={`bg-white border-4 ${currentCert.borderColor} p-6 rounded-lg shadow-sm flex flex-col items-center text-center min-h-[350px] md:min-h-[420px]`}
+                  className={`bg-zinc-100 border-2 ${currentCert.borderColor} p-6 rounded-lg shadow-sm flex flex-col items-center text-center min-h-[350px] md:min-h-[420px]`}
                 >
                   <h2 className="text-xl font-bold font-serif">
                     Certificate of Completion
@@ -259,7 +259,7 @@ const Profile = ({ onReplayTutorial }) => {
       <div className="mt-10 flex justify-end">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 px-5 py-2 rounded-lg hover:bg-red-100"
+          className="flex items-center mx-auto gap-2 bg-red-50 border border-red-200 text-red-600 px-5 py-2 rounded-lg hover:bg-red-100"
         >
           <LogOut size={18} /> Logout
         </button>
