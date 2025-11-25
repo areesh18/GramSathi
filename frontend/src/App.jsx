@@ -17,7 +17,8 @@ import Profile from "./pages/Profile";
 import Learn from "./pages/Learn";
 import Login from "./pages/Login";
 import Landing from "./pages/Landing";
-
+import Mandi from "./pages/Mandi";
+import Quiz from "./pages/Quiz";
 
 /* // Placeholders
 const Learn = () => <div className="p-8 text-center text-gray-500">Course Library Coming Soon</div>;
@@ -78,7 +79,6 @@ const Sidebar = () => {
       </nav>
 
       <div className="mt-auto pt-4 border-t border-gray-100">
-        
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 px-4 py-2 text-red-500 hover:bg-red-50 rounded-xl w-full transition cursor-pointer"
@@ -197,6 +197,22 @@ function App() {
               element={
                 <ProtectedRoute roleRequired="admin">
                   <Admin />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/services/mandi"
+              element={
+                <ProtectedRoute>
+                  <Mandi />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/learn/quiz"
+              element={
+                <ProtectedRoute>
+                  <Quiz />
                 </ProtectedRoute>
               }
             />
