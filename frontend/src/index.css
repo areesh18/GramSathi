@@ -3,10 +3,10 @@
 /* --- GTRANSLATE: NO FLAGS MODE --- */
 
 /* 1. Hide ALL flags (Main button + Dropdown list) */
-/* .gt_float_switcher img {
+.gt_float_switcher img {
     display: none !important;
 }
- */
+
 /* 2. Adjust the Main Button since the flag is gone */
 .gt_float_switcher .gt_selected {
     padding-left: 0 !important; /* Remove space left for flag */

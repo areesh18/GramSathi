@@ -150,7 +150,7 @@ const Sidebar = ({ onReplayTutorial }) => {
 };
 
 // --- MOBILE BOTTOM NAV ---
-const BottomNav = ({ onReplayTutorial }) => {
+const BottomNav = () => {
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
   const { t } = useLanguage();
@@ -160,29 +160,20 @@ const BottomNav = ({ onReplayTutorial }) => {
 
   if (location.pathname.includes("/simulation")) return null;
 
-  const NavItem = ({ to, icon: Icon, label, onClick }) =>
-    to ? (
-      <Link
-        to={to}
-        className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
-          isActive(to) ? "text-blue-600" : "text-gray-400"
-        }`}
-      >
-        <Icon size={22} strokeWidth={isActive(to) ? 2.5 : 2} />
-        <span className="text-[10px] font-medium">{label}</span>
-      </Link>
-    ) : (
-      <button
-        onClick={onClick}
-        className="flex flex-col items-center justify-center w-full h-full space-y-1 text-purple-600"
-      >
-        <Icon size={22} strokeWidth={2} />
-        <span className="text-[10px] font-medium">{label}</span>
-      </button>
-    );
+  const NavItem = ({ to, icon: Icon, label }) => (
+    <Link
+      to={to}
+      className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
+        isActive(to) ? "text-blue-600" : "text-gray-400"
+      }`}
+    >
+      <Icon size={22} strokeWidth={isActive(to) ? 2.5 : 2} />
+      <span className="text-[10px] font-medium">{label}</span>
+    </Link>
+  );
 
   return (
-    <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 h-16 z-50 flex justify-around items-center px-2">
+    <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 h-16 z-50 flex justify-around items-center px-2 pb-safe">
       {isAdmin ? (
         <>
           <NavItem to="/admin" icon={BarChart3} label="Dashboard" />
@@ -193,11 +184,7 @@ const BottomNav = ({ onReplayTutorial }) => {
           <NavItem to="/dashboard" icon={HomeIcon} label={t("dashboard")} />
           <NavItem to="/learn" icon={BookOpen} label={t("learn")} />
           <NavItem to="/services" icon={Grid} label={t("practice")} />
-          <NavItem
-            icon={RefreshCw}
-            label="Tutorial"
-            onClick={onReplayTutorial}
-          />
+          <NavItem to="/profile" icon={User} label={t("profile")} />
         </>
       )}
     </div>
@@ -315,7 +302,8 @@ function App() {
               path="/profile"
               element={
                 <ProtectedRoute>
-                  <Profile />
+                  {/* Pass the replay handler here */}
+                  <Profile onReplayTutorial={handleReplayTutorial} />
                 </ProtectedRoute>
               }
             />
@@ -403,9 +391,7 @@ function App() {
         </div>
 
         {/* Bottom Nav - Show only when authenticated */}
-        {isAuthenticated && (
-          <BottomNav onReplayTutorial={handleReplayTutorial} />
-        )}
+        {isAuthenticated && <BottomNav />}
 
         {/* Onboarding Tutorial Overlay */}
         {showOnboarding && (

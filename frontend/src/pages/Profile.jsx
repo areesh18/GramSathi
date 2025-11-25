@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { User, MapPin, Award, Download, Share2, LogOut } from "lucide-react";
+import {
+  User,
+  MapPin,
+  Award,
+  Download,
+  Share2,
+  LogOut,
+  RefreshCw,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const Profile = () => {
+const Profile = ({ onReplayTutorial }) => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
@@ -144,7 +152,7 @@ const Profile = () => {
   if (!user) return <div className="p-8 text-center">Loading Profile...</div>;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 md:p-12 font-sans">
+    <div className="min-h-screen bg-gray-50 p-6 md:p-12 font-sans pb-24">
       <h1 className="text-3xl font-bold text-gray-800 mb-8">My Identity 🇮🇳</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -246,8 +254,17 @@ const Profile = () => {
         </div>
       </div>
 
-      {/* LOGOUT BUTTON (Visible mainly on Mobile) */}
-      <div className="mt-10 pt-6 border-t border-gray-200 md:hidden">
+      {/* SETTINGS & LOGOUT (Visible mainly on Mobile) */}
+      <div className="mt-10 pt-6 border-t border-gray-200 space-y-4 md:hidden">
+        {onReplayTutorial && (
+          <button
+            onClick={onReplayTutorial}
+            className="w-full flex items-center justify-center gap-2 bg-purple-50 text-purple-600 py-4 rounded-xl font-bold shadow-sm active:scale-95 transition"
+          >
+            <RefreshCw size={20} /> Replay Tutorial
+          </button>
+        )}
+
         <button
           onClick={handleLogout}
           className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 py-4 rounded-xl font-bold shadow-sm active:scale-95 transition"
