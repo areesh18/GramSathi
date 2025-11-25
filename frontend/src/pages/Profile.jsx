@@ -120,7 +120,7 @@ const Profile = ({ onReplayTutorial }) => {
       try {
         await navigator.share({
           title: "GramSathi Certificate",
-          text: `I've completed Digital Literacy training on GramSathi! Score: ${user.total_score}/100`,
+          text: `I've completed Digital Literacy training on GramSathi! Score: ${user.total_score}`,
           url: window.location.href,
         });
       } catch (err) {
@@ -182,7 +182,7 @@ const Profile = ({ onReplayTutorial }) => {
               </p>
               <h3 className="text-5xl font-bold">
                 {user.total_score}{" "}
-                <span className="text-2xl opacity-70">/ 100</span>
+                <span className="text-2xl opacity-70"></span>
               </h3>
               <p className="mt-4 text-sm opacity-90">
                 {user.total_score > 0
