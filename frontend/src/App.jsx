@@ -24,7 +24,7 @@ import FormSim from "./pages/FormSim";
 import LandRecords from "./pages/LandRecords";
 import Rozgar from "./pages/Rozgar";
 import Complaint from "./pages/Complaint";
-
+import OfflineBanner from './components/OfflineBanner';
 /* // Placeholders
 const Learn = () => <div className="p-8 text-center text-gray-500">Course Library Coming Soon</div>;
 const Profile = () => <div className="p-8 text-center text-gray-500">User Profile Settings</div>; */
@@ -130,6 +130,7 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
+        <OfflineBanner />
         {/* Only show Sidebar if logged in */}
         {localStorage.getItem("token") && <Sidebar />}
 
