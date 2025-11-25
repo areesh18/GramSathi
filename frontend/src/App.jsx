@@ -16,6 +16,7 @@ import {
   LogOut,
   Globe,
   BarChart3,
+  RefreshCw,
 } from "lucide-react";
 import Home from "./pages/Home";
 import Services from "./pages/Services";
@@ -33,6 +34,7 @@ import LandRecords from "./pages/LandRecords";
 import Rozgar from "./pages/Rozgar";
 import Complaint from "./pages/Complaint";
 import OfflineBanner from "./components/OfflineBanner";
+import OnboardingTutorial from "./components/OnboardingTutorial";
 import { useLanguage } from "./context/LanguageContext";
 import DigiLockerSim from "./pages/DigiLockerSim";
 import { syncOfflineActions } from "./utils/offlineSync";
@@ -49,7 +51,7 @@ const ProtectedRoute = ({ children, roleRequired }) => {
 };
 
 // --- DESKTOP SIDEBAR ---
-const Sidebar = () => {
+const Sidebar = ({ onReplayTutorial }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const isActive = (path) => location.pathname === path;
@@ -90,13 +92,11 @@ const Sidebar = () => {
 
       <nav className="space-y-1 flex-1">
         {isAdmin ? (
-          // Admin sees only Dashboard and Profile
           <>
             <NavItem to="/admin" icon={BarChart3} label="Dashboard" />
             <NavItem to="/profile" icon={User} label={t("profile")} />
           </>
         ) : (
-          // Regular users see all except admin
           <>
             <NavItem to="/dashboard" icon={HomeIcon} label={t("dashboard")} />
             <NavItem to="/services" icon={Grid} label={t("practice")} />
@@ -105,6 +105,19 @@ const Sidebar = () => {
           </>
         )}
       </nav>
+
+      {/* Replay Tutorial Button */}
+      {!isAdmin && (
+        <div className="px-4 py-3 border-t border-gray-100">
+          <button
+            onClick={onReplayTutorial}
+            className="flex items-center gap-3 px-4 py-2.5 text-purple-600 hover:bg-purple-50 rounded-lg w-full transition-colors text-sm font-medium"
+          >
+            <RefreshCw size={18} />
+            <span>Replay Tutorial</span>
+          </button>
+        </div>
+      )}
 
       <div className="px-4 py-4 border-t border-gray-100">
         <div className="flex items-center justify-between bg-gray-50 p-2.5 rounded-lg">
@@ -137,44 +150,54 @@ const Sidebar = () => {
 };
 
 // --- MOBILE BOTTOM NAV ---
-const BottomNav = () => {
+const BottomNav = ({ onReplayTutorial }) => {
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
   const { t } = useLanguage();
 
-  // Get user role
   const user = JSON.parse(localStorage.getItem("user") || "{}");
   const isAdmin = user.role === "admin";
 
   if (location.pathname.includes("/simulation")) return null;
 
-  const NavItem = ({ to, icon: Icon, label }) => (
-    <Link
-      to={to}
-      className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
-        isActive(to) ? "text-blue-600" : "text-gray-400"
-      }`}
-    >
-      <Icon size={22} strokeWidth={isActive(to) ? 2.5 : 2} />
-      <span className="text-[10px] font-medium">{label}</span>
-    </Link>
-  );
+  const NavItem = ({ to, icon: Icon, label, onClick }) =>
+    to ? (
+      <Link
+        to={to}
+        className={`flex flex-col items-center justify-center w-full h-full space-y-1 ${
+          isActive(to) ? "text-blue-600" : "text-gray-400"
+        }`}
+      >
+        <Icon size={22} strokeWidth={isActive(to) ? 2.5 : 2} />
+        <span className="text-[10px] font-medium">{label}</span>
+      </Link>
+    ) : (
+      <button
+        onClick={onClick}
+        className="flex flex-col items-center justify-center w-full h-full space-y-1 text-purple-600"
+      >
+        <Icon size={22} strokeWidth={2} />
+        <span className="text-[10px] font-medium">{label}</span>
+      </button>
+    );
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 h-16 z-50 flex justify-around items-center px-2">
       {isAdmin ? (
-        // Admin mobile nav
         <>
           <NavItem to="/admin" icon={BarChart3} label="Dashboard" />
           <NavItem to="/profile" icon={User} label={t("profile")} />
         </>
       ) : (
-        // Regular user mobile nav
         <>
           <NavItem to="/dashboard" icon={HomeIcon} label={t("dashboard")} />
           <NavItem to="/learn" icon={BookOpen} label={t("learn")} />
           <NavItem to="/services" icon={Grid} label={t("practice")} />
-          <NavItem to="/profile" icon={User} label={t("profile")} />
+          <NavItem
+            icon={RefreshCw}
+            label="Tutorial"
+            onClick={onReplayTutorial}
+          />
         </>
       )}
     </div>
@@ -183,19 +206,29 @@ const BottomNav = () => {
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Check authentication status on mount and update
   useEffect(() => {
     const checkAuth = () => {
       const token = localStorage.getItem("token");
-      setIsAuthenticated(!!token);
+      const isAuth = !!token;
+      setIsAuthenticated(isAuth);
+
+      // Show onboarding ONLY for first-time authenticated users (not guests)
+      if (isAuth && token !== "guest-token") {
+        const hasCompletedOnboarding = localStorage.getItem(
+          "onboarding_completed"
+        );
+        if (!hasCompletedOnboarding) {
+          // Small delay to let the dashboard render first
+          setTimeout(() => setShowOnboarding(true), 500);
+        }
+      }
     };
 
     checkAuth();
-
-    // Listen for storage changes (for cross-tab sync)
     window.addEventListener("storage", checkAuth);
-
     return () => window.removeEventListener("storage", checkAuth);
   }, []);
 
@@ -215,13 +248,22 @@ function App() {
     return () => window.removeEventListener("online", handleOnline);
   }, []);
 
+  const handleReplayTutorial = () => {
+    setShowOnboarding(true);
+  };
+
+  const handleOnboardingComplete = () => {
+    setShowOnboarding(false);
+    localStorage.setItem("onboarding_completed", "true");
+  };
+
   return (
     <Router>
       <div className="min-h-screen bg-gray-50 font-sans text-gray-900 antialiased">
         <OfflineBanner />
 
         {/* Sidebar - Show only when authenticated */}
-        {isAuthenticated && <Sidebar />}
+        {isAuthenticated && <Sidebar onReplayTutorial={handleReplayTutorial} />}
 
         <div
           className={
@@ -361,7 +403,14 @@ function App() {
         </div>
 
         {/* Bottom Nav - Show only when authenticated */}
-        {isAuthenticated && <BottomNav />}
+        {isAuthenticated && (
+          <BottomNav onReplayTutorial={handleReplayTutorial} />
+        )}
+
+        {/* Onboarding Tutorial Overlay */}
+        {showOnboarding && (
+          <OnboardingTutorial onComplete={handleOnboardingComplete} />
+        )}
       </div>
     </Router>
   );

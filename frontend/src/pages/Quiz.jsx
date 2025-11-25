@@ -58,23 +58,23 @@ const Quiz = () => {
   };
 
   const submitScore = async (finalScore) => {
-    // Only save if they pass (e.g., > 1 correct)
-    if (finalScore < 2) return;
-
-    // --- CORRECT SCOPE: Define variables here ---
     const storedUser = JSON.parse(localStorage.getItem("user"));
     const token = localStorage.getItem("token");
 
+    // FIXED: Track ALL attempts, not just passing ones
+    const passed = finalScore >= 2;
     const payload = {
       user_id: storedUser.id,
       module_id: "quiz_literacy_101",
-      points: finalScore * 10, // 10 points per correct answer
+      points: passed ? finalScore * 10 : 0, // Only award points if passed
+      status: passed ? "passed" : "failed", // Track pass/fail status
+      score: finalScore,
+      total_questions: questions.length,
     };
 
-    // --- CORRECT SCOPE: Offline check logic ---
+    // --- Offline check logic ---
     if (!navigator.onLine) {
       saveOfflineAction("/api/progress", "POST", payload);
-      alert("Quiz score saved offline! Will sync automatically.");
       return;
     }
 
@@ -90,16 +90,17 @@ const Quiz = () => {
       });
     } catch (err) {
       console.error("Failed to save progress, queuing offline.");
-      saveOfflineAction("/api/progress", "POST", payload); // Queue on network failure
-      alert("⚠️ Server unreachable. Saved offline for later sync.");
+      saveOfflineAction("/api/progress", "POST", payload);
     }
   };
 
   if (showResult) {
+    const passed = score >= 2;
+
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
         <div className="bg-white p-8 rounded-3xl shadow-xl text-center max-w-sm w-full">
-          {score >= 2 ? (
+          {passed ? (
             <>
               <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Award className="text-green-600 w-10 h-10" />
@@ -121,15 +122,27 @@ const Quiz = () => {
                 Keep Practicing
               </h2>
               <p className="text-gray-500 mt-2">
-                You needs 2 correct answers to pass.
+                You scored {score} out of {questions.length}
               </p>
+              <p className="text-red-600 font-medium mt-2 text-sm">
+                You need 2+ correct answers to pass.
+              </p>
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 mt-6 text-left">
+                <h4 className="font-semibold text-blue-900 text-sm mb-2">
+                  💡 Study Tip
+                </h4>
+                <p className="text-blue-700 text-xs leading-relaxed">
+                  Review the learning videos in the "Learn" section before
+                  retrying. Each topic has helpful tutorials!
+                </p>
+              </div>
             </>
           )}
           <button
             onClick={() => navigate("/learn")}
-            className="mt-8 w-full bg-blue-600 text-white py-3 rounded-xl font-bold"
+            className="mt-8 w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition"
           >
-            Back to Learning
+            {passed ? "Back to Learning" : "Review Lessons"}
           </button>
         </div>
       </div>
@@ -156,7 +169,7 @@ const Quiz = () => {
               <button
                 key={i}
                 onClick={() => handleAnswer(i)}
-                className="w-full text-left p-4 rounded-xl border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition font-medium text-gray-700"
+                className="w-full text-left p-4 rounded-xl border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition font-medium text-gray-700 active:scale-98"
               >
                 {opt}
               </button>

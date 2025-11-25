@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   Mic,
   Loader2,
+  Info,
 } from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 
@@ -19,12 +20,21 @@ const Home = () => {
   const navigate = useNavigate();
 
   const [isListening, setIsListening] = useState(false);
+  const [showVoiceHints, setShowVoiceHints] = useState(false);
 
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
   const [user, setUser] = useState({
     name: storedUser.name || "Guest",
     score: storedUser.total_score || 0,
   });
+
+  // Voice command hints
+  const voiceCommands = [
+    { command: "UPI, Pay, Paisa", action: "Open UPI Payment" },
+    { command: "Kisan, Form, Yojana", action: "PM Kisan Form" },
+    { command: "Mandi, Rate, Bhav", action: "Mandi Prices" },
+    { command: "Doctor, Health, Dawa", action: "Find Doctor" },
+  ];
 
   // Voice command processor
   const processCommand = (rawCommand) => {
@@ -67,9 +77,8 @@ const Home = () => {
     ) {
       navigate("/services/doctors");
     } else {
-      alert(
-        `Heard: "${command}". \n\nTry saying: 'Mandi' (मंडी) or 'Kisan' (किसान)`
-      );
+      setShowVoiceHints(true);
+      setTimeout(() => setShowVoiceHints(false), 5000);
     }
   };
 
@@ -111,6 +120,9 @@ const Home = () => {
         if (fallback) processCommand(fallback.toLowerCase());
       } else if (event.error === "not-allowed") {
         alert("❌ Permission Denied. Check microphone settings.");
+      } else if (event.error === "no-speech") {
+        setShowVoiceHints(true);
+        setTimeout(() => setShowVoiceHints(false), 5000);
       }
     };
 
@@ -198,6 +210,33 @@ const Home = () => {
               </button>
             </div>
           </div>
+
+          {/* Voice Command Hints */}
+          {showVoiceHints && (
+            <div className="mt-4 bg-blue-50 border border-blue-100 rounded-lg p-4 animate-in slide-in-from-top">
+              <div className="flex items-start gap-3">
+                <Info className="text-blue-600 shrink-0 mt-0.5" size={20} />
+                <div>
+                  <h4 className="font-semibold text-gray-900 text-sm mb-2">
+                    Try saying these commands:
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    {voiceCommands.map((cmd, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-white rounded-md p-2 text-xs border border-blue-100"
+                      >
+                        <span className="font-semibold text-blue-700">
+                          "{cmd.command}"
+                        </span>
+                        <span className="text-gray-500"> → {cmd.action}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 

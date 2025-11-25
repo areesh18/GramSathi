@@ -71,6 +71,14 @@ const Mandi = () => {
     setShowPass(true);
   };
 
+  // Calculate earnings - moved outside conditional for consistency
+  const calculateEarnings = () => {
+    if (!sellForm.qty) return 0;
+    const selectedPrice =
+      marketData.find((m) => m.crop === sellForm.crop)?.price || 0;
+    return parseInt(sellForm.qty) * selectedPrice;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-8 pb-24">
       {/* Header */}
@@ -244,22 +252,19 @@ const Mandi = () => {
                   </div>
                 </div>
 
-                {/* Real-time Calculation */}
-                {sellForm.qty && (
-                  <div className="bg-blue-50 p-4 rounded-xl flex justify-between items-center border border-blue-100">
-                    <span className="text-blue-800 font-medium text-sm">
-                      Est. Earnings:
-                    </span>
-                    <span className="text-2xl font-bold text-blue-700">
-                      ₹
-                      {(
-                        parseInt(sellForm.qty) *
-                        (marketData.find((m) => m.crop === sellForm.crop)
-                          ?.price || 0)
-                      ).toLocaleString()}
-                    </span>
-                  </div>
-                )}
+                {/* FIXED: Real-time Calculation - Always Visible */}
+                <div
+                  className={`bg-blue-50 p-4 rounded-xl flex justify-between items-center border border-blue-100 transition-all ${
+                    !sellForm.qty ? "opacity-50" : "opacity-100"
+                  }`}
+                >
+                  <span className="text-blue-800 font-medium text-sm">
+                    Est. Earnings:
+                  </span>
+                  <span className="text-2xl font-bold text-blue-700">
+                    ₹{calculateEarnings().toLocaleString()}
+                  </span>
+                </div>
 
                 <button className="w-full bg-orange-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-orange-700 flex items-center justify-center gap-2">
                   <Ticket size={20} /> Generate Gate Pass

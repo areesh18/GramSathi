@@ -67,6 +67,7 @@ const Services = () => {
             Learn how to use 50+ Government Services without any risk.
           </p>
 
+          {/* FIXED: Search box with loading state */}
           <div className="mt-6 relative max-w-2xl">
             <Search
               className="absolute left-4 top-3.5 text-gray-400"
@@ -76,9 +77,23 @@ const Services = () => {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search lessons (e.g., 'How to apply for Pension')..."
-              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-lg outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-50 transition-all text-sm"
+              placeholder={
+                loading
+                  ? "Loading lessons..."
+                  : "Search lessons (e.g., 'How to apply for Pension')..."
+              }
+              disabled={loading}
+              className={`w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-lg outline-none text-sm transition-all ${
+                loading
+                  ? "cursor-wait opacity-60"
+                  : "focus:border-blue-500 focus:ring-2 focus:ring-blue-50"
+              }`}
             />
+            {loading && (
+              <div className="absolute right-4 top-3.5">
+                <div className="w-5 h-5 border-2 border-gray-200 border-t-blue-600 rounded-full animate-spin"></div>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -100,14 +115,17 @@ const Services = () => {
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs - Disabled while loading */}
         <div className="flex gap-2 overflow-x-auto pb-4 mb-6 no-scrollbar">
           {categories.map((cat) => (
             <button
               key={cat.id}
-              onClick={() => setActiveTab(cat.id)}
+              onClick={() => !loading && setActiveTab(cat.id)}
+              disabled={loading}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
-                activeTab === cat.id
+                loading
+                  ? "opacity-50 cursor-wait"
+                  : activeTab === cat.id
                   ? "bg-blue-600 text-white shadow-sm"
                   : "bg-white text-gray-600 border border-gray-200 hover:border-gray-300"
               }`}

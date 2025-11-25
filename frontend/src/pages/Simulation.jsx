@@ -51,17 +51,22 @@ const UPISimulation = () => {
     }
   };
 
+  // FIXED: Award points for BOTH payment and balance check
   const handleComplete = async () => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     const token = localStorage.getItem("token");
+
+    // Award different points based on activity
+    const points = mode === "pay" ? 50 : 30; // Pay gets 50, balance check gets 30
+
     const payload = {
       user_id: storedUser.id,
-      module_id: "upi",
-      points: 50,
+      module_id: mode === "pay" ? "upi_payment" : "upi_balance_check",
+      points: points,
     };
 
     if (!token || token === "guest-token") {
-      alert("🎉 Practice Complete! (Guest Mode)");
+      alert(`🎉 Practice Complete! (Guest Mode)`);
       navigate("/");
       return;
     }
@@ -69,7 +74,7 @@ const UPISimulation = () => {
     if (isOffline) {
       saveOfflineAction("/api/progress", "POST", payload);
       alert(
-        "🎉 Saved Offline! Points will add automatically when internet returns."
+        `🎉 Saved Offline! ${points} Points will add automatically when internet returns.`
       );
       navigate("/");
       return;
@@ -86,14 +91,14 @@ const UPISimulation = () => {
       });
 
       if (response.ok) {
-        alert("🎉 Success! 50 Points Added to your Profile.");
+        alert(`🎉 Success! ${points} Points Added to your Profile.`);
       } else {
         throw new Error("Server error");
       }
     } catch (error) {
       console.error("Backend unreachable, queuing offline.", error);
       saveOfflineAction("/api/progress", "POST", payload);
-      alert("🎉 Saved Offline! Will sync later.");
+      alert(`🎉 Saved Offline! Will sync later.`);
     }
     navigate("/");
   };
@@ -352,7 +357,7 @@ const UPISimulation = () => {
           </div>
         )}
 
-        {/* STEP 6: BALANCE VIEW */}
+        {/* STEP 6: BALANCE VIEW - FIXED: Now awards points */}
         {step === 6 && (
           <div className="fixed inset-0 bg-blue-600 z-50 flex flex-col items-center justify-center text-white p-6">
             <div className="bg-white text-blue-600 p-6 rounded-full mb-6 shadow-xl">
@@ -361,12 +366,15 @@ const UPISimulation = () => {
             <h1 className="text-lg font-medium mb-2 opacity-90">
               Available Balance
             </h1>
-            <h2 className="text-5xl font-semibold mb-12">₹ 4,250.00</h2>
+            <h2 className="text-5xl font-semibold mb-4">₹ 4,250.00</h2>
+            <p className="text-blue-100 text-sm mb-8">
+              ✨ Great! You've learned to check balance.
+            </p>
             <button
-              onClick={() => navigate("/")}
+              onClick={handleComplete}
               className="bg-white text-blue-700 w-full max-w-sm py-4 rounded-xl font-medium shadow-xl hover:bg-gray-50 transition-colors"
             >
-              Done
+              Complete (+30 Points)
             </button>
           </div>
         )}

@@ -12,7 +12,8 @@ import { useNavigate } from "react-router-dom";
 const Doctors = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState("All");
-  const [booking, setBooking] = useState(null); // Track booking state
+  // FIXED: Track booking per doctor ID, not globally
+  const [bookingStates, setBookingStates] = useState({});
 
   const doctors = [
     {
@@ -55,13 +56,16 @@ const Doctors = () => {
   ];
 
   const handleConnect = (doc) => {
-    setBooking(doc.id);
+    // Set this specific doctor as booking
+    setBookingStates({ ...bookingStates, [doc.id]: true });
+
     // Simulate API delay
     setTimeout(() => {
       alert(
         `✅ Appointment Confirmed!\n\nDoctor: ${doc.name}\nTime: Today, 4:30 PM\nToken: #GR-992`
       );
-      setBooking(null);
+      // Clear booking state for this doctor
+      setBookingStates({ ...bookingStates, [doc.id]: false });
     }, 1500);
   };
 
@@ -106,81 +110,97 @@ const Doctors = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {doctors
           .filter((d) => filter === "All" || d.type.includes(filter))
-          .map((doc) => (
-            <div
-              key={doc.id}
-              className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition relative overflow-hidden"
-            >
-              {/* Status Badge */}
-              <div
-                className={`absolute top-4 right-4 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 ${
-                  doc.status === "Available"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-orange-100 text-orange-700"
-                }`}
-              >
-                <div
-                  className={`w-2 h-2 rounded-full ${
-                    doc.status === "Available"
-                      ? "bg-green-600 animate-pulse"
-                      : "bg-orange-500"
-                  }`}
-                ></div>
-                {doc.status}
-              </div>
+          .map((doc) => {
+            const isBooking = bookingStates[doc.id];
 
-              <div className="flex items-start gap-4">
+            return (
+              <div
+                key={doc.id}
+                className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition relative overflow-hidden"
+              >
+                {/* Status Badge */}
                 <div
-                  className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-sm ${
-                    doc.isHospital
-                      ? "bg-red-100 text-red-600"
-                      : "bg-blue-100 text-blue-600"
+                  className={`absolute top-4 right-4 text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1 ${
+                    doc.status === "Available"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-orange-100 text-orange-700"
                   }`}
                 >
-                  {doc.isHospital ? "🏥" : "👨‍⚕️"}
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      doc.status === "Available"
+                        ? "bg-green-600 animate-pulse"
+                        : "bg-orange-500"
+                    }`}
+                  ></div>
+                  {doc.status}
                 </div>
-                <div>
-                  <h3 className="font-bold text-gray-900 text-lg">
-                    {doc.name}
-                  </h3>
-                  <p className="text-blue-600 text-sm font-medium">
-                    {doc.type}
-                  </p>
-                  <p className="text-gray-400 text-xs mt-1">
-                    {doc.exp} • {doc.lang}
-                  </p>
-                </div>
-              </div>
 
-              <div className="mt-6 flex gap-3">
-                {doc.isOnline ? (
-                  <button
-                    onClick={() => handleConnect(doc)}
-                    disabled={booking === doc.id}
-                    className={`flex-1 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition shadow-lg ${
-                      booking === doc.id
-                        ? "bg-gray-100 text-gray-500"
-                        : "bg-blue-600 text-white hover:bg-blue-700 active:scale-95 shadow-blue-200"
+                <div className="flex items-start gap-4">
+                  <div
+                    className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl shadow-sm ${
+                      doc.isHospital
+                        ? "bg-red-100 text-red-600"
+                        : "bg-blue-100 text-blue-600"
                     }`}
                   >
-                    {booking === doc.id ? (
-                      <Loader2 size={18} className="animate-spin" />
-                    ) : (
-                      <Video size={18} />
-                    )}
-                    {booking === doc.id ? "Booking..." : "Consult Now"}
+                    {doc.isHospital ? "🏥" : "👨‍⚕️"}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-lg">
+                      {doc.name}
+                    </h3>
+                    <p className="text-blue-600 text-sm font-medium">
+                      {doc.type}
+                    </p>
+                    <p className="text-gray-400 text-xs mt-1">
+                      {doc.exp} • {doc.lang}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex gap-3">
+                  {doc.isOnline ? (
+                    <button
+                      onClick={() => handleConnect(doc)}
+                      disabled={isBooking}
+                      className={`flex-1 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition shadow-lg ${
+                        isBooking
+                          ? "bg-gray-100 text-gray-500 cursor-wait"
+                          : "bg-blue-600 text-white hover:bg-blue-700 active:scale-95 shadow-blue-200"
+                      }`}
+                    >
+                      {isBooking ? (
+                        <>
+                          <Loader2 size={18} className="animate-spin" />
+                          Booking...
+                        </>
+                      ) : (
+                        <>
+                          <Video size={18} />
+                          Consult Now
+                        </>
+                      )}
+                    </button>
+                  ) : (
+                    <button className="flex-1 bg-gray-100 text-gray-400 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 cursor-not-allowed">
+                      <Calendar size={18} /> Book Later
+                    </button>
+                  )}
+                  <button
+                    disabled={isBooking}
+                    className={`px-4 rounded-xl border transition ${
+                      isBooking
+                        ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed"
+                        : "bg-green-50 text-green-600 border-green-100 hover:bg-green-100"
+                    }`}
+                  >
+                    <Phone size={20} />
                   </button>
-                ) : (
-                  <button className="flex-1 bg-gray-100 text-gray-400 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 cursor-not-allowed">
-                    <Calendar size={18} /> Book Later
-                  </button>
-                )}
-                <button className="px-4 bg-green-50 text-green-600 rounded-xl border border-green-100 hover:bg-green-100 transition">
-                  <Phone size={20} />
-                </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
       </div>
     </div>
   );
