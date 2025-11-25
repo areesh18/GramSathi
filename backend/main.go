@@ -41,14 +41,32 @@ func RecordProgress(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Score updated!"})
 }
+func GetAdminStats(w http.ResponseWriter, r *http.Request) {
+	var totalUsers int64
+	var avgScore float64
 
+	// Count all users
+	DB.Model(&User{}).Count(&totalUsers)
+
+	// Calculate average score
+	// (If no users, result is 0)
+	DB.Model(&User{}).Select("AVG(total_score)").Scan(&avgScore)
+
+	response := map[string]interface{}{
+		"total_users": totalUsers,
+		"avg_score":   int(avgScore),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
 func main() {
 	InitDB()
 
 	r := mux.NewRouter()
 	r.HandleFunc("/api/user", GetUser).Methods("GET")
 	r.HandleFunc("/api/progress", RecordProgress).Methods("POST")
-
+	r.HandleFunc("/api/admin/stats", GetAdminStats).Methods("GET")
 	// Enable CORS so React (port 5173) can talk to Go (port 8080)
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173", "http://localhost:3000"},

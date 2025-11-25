@@ -4,6 +4,7 @@ import { Home as HomeIcon, BookOpen, Grid, User } from 'lucide-react';
 import Home from './pages/Home';
 import Services from './pages/Services';
 import UPISimulation from './pages/Simulation';
+import Admin from './pages/Admin';
 // --- Components for other pages (Placeholders for now) ---
 const Learn = () => <div className="p-8 text-center text-gray-500">Course Library Coming Soon</div>;
 const Profile = () => <div className="p-8 text-center text-gray-500">User Profile Settings</div>;
@@ -40,6 +41,7 @@ function App() {
           <Route path="/services" element={<Services />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/simulation/upi" element={<UPISimulation />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
         <BottomNav />
       </div>
