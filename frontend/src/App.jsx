@@ -194,6 +194,9 @@ const BottomNav = () => {
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  // Role-based flags derived from localStorage for rendering decisions
+  const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+  const isAdmin = currentUser.role === "admin";
 
   // Check authentication status on mount and update
   useEffect(() => {
@@ -207,7 +210,8 @@ function App() {
         const hasCompletedOnboarding = localStorage.getItem(
           "onboarding_completed"
         );
-        if (!hasCompletedOnboarding) {
+        // Do not show onboarding for admin users
+        if (!hasCompletedOnboarding && !isAdmin) {
           // Small delay to let the dashboard render first
           setTimeout(() => setShowOnboarding(true), 500);
         }
@@ -218,6 +222,26 @@ function App() {
     window.addEventListener("storage", checkAuth);
     return () => window.removeEventListener("storage", checkAuth);
   }, []);
+
+  // Show onboarding when isAuthenticated toggles to true (i.e. after a login)
+  useEffect(() => {
+    if (isAuthenticated) {
+      const token = localStorage.getItem("token");
+      const user = JSON.parse(localStorage.getItem("user") || "{}");
+      const currentIsAdmin = user.role === "admin";
+      // Do not show for guest logins
+      if (token && token !== "guest-token") {
+        const hasCompletedOnboarding = localStorage.getItem(
+          "onboarding_completed"
+        );
+        // Only show onboarding for non-admin users
+        if (!hasCompletedOnboarding && !currentIsAdmin) {
+          // Small delay to let the route/dashboard render first
+          setTimeout(() => setShowOnboarding(true), 500);
+        }
+      }
+    }
+  }, [isAuthenticated]);
 
   // Global offline sync listener
   useEffect(() => {
@@ -250,7 +274,11 @@ function App() {
         <OfflineBanner />
 
         {/* Sidebar - Show only when authenticated */}
-        {isAuthenticated && <Sidebar onReplayTutorial={handleReplayTutorial} />}
+        {isAuthenticated && (
+          <Sidebar
+            onReplayTutorial={!isAdmin ? handleReplayTutorial : undefined}
+          />
+        )}
 
         <div
           className={
@@ -303,7 +331,7 @@ function App() {
               element={
                 <ProtectedRoute>
                   {/* Pass the replay handler here */}
-                  <Profile onReplayTutorial={handleReplayTutorial} />
+                  <Profile onReplayTutorial={!isAdmin ? handleReplayTutorial : undefined} />
                 </ProtectedRoute>
               }
             />
@@ -394,7 +422,7 @@ function App() {
         {isAuthenticated && <BottomNav />}
 
         {/* Onboarding Tutorial Overlay */}
-        {showOnboarding && (
+        {showOnboarding && !isAdmin && (
           <OnboardingTutorial onComplete={handleOnboardingComplete} />
         )}
       </div>
