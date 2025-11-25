@@ -10,35 +10,51 @@ import {
   Briefcase,
   AlertTriangle,
 } from "lucide-react";
-import { useLanguage } from '../context/LanguageContext';
+import { useLanguage } from "../context/LanguageContext";
+
 const Home = () => {
-  const [user, setUser] = useState({ name: "Loading...", score: 0 });
-    const { t } = useLanguage();
+  const { t } = useLanguage();
+  
+  // 1. Get stored user safely (handles null case)
+  const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+
+  // 2. Initialize state from storage (Fixes "Loading..." stuck issue)
+  const [user, setUser] = useState({ 
+    name: storedUser.name || "Guest", 
+    score: storedUser.total_score || 0 
+  });
+
   useEffect(() => {
-    // Get stored user details
-    const storedUser = JSON.parse(localStorage.getItem("user"));
     const token = localStorage.getItem("token");
 
-    if (storedUser && token) {
+    // 3. Only fetch updates if online and NOT a guest
+    if (storedUser.id && storedUser.id !== 'guest' && navigator.onLine) {
       fetch(`http://localhost:8080/api/user/${storedUser.id}`, {
         headers: {
-          Authorization: `Bearer ${token}`, // <--- THE KEY CHANGE
+          Authorization: `Bearer ${token}`,
         },
       })
-        .then((res) => res.json())
-        .then((data) => setUser({ name: data.name, score: data.total_score }))
-        .catch((err) => console.error("Failed to fetch user", err));
+        .then((res) => {
+            if (!res.ok) throw new Error("Offline or Server Error");
+            return res.json();
+        })
+        .then((data) => {
+            setUser({ name: data.name, score: data.total_score });
+            localStorage.setItem('user', JSON.stringify(data)); 
+        })
+        .catch((err) => console.log("Using offline data"));
     }
   }, []);
 
   return (
     <div className="pb-24 md:pb-8 min-h-screen bg-gray-50">
-      {/* Header - Responsive Height and Padding */}
       <header className="bg-gradient-to-r from-blue-800 to-blue-600 text-white p-6 md:p-10 rounded-b-[2rem] md:rounded-none shadow-xl">
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
-              <p className="text-blue-200 text-sm font-medium mb-1">{t('welcome')},</p>
+              <p className="text-blue-200 text-sm font-medium mb-1">
+                {t("welcome")},
+              </p>
               <h1 className="text-3xl md:text-4xl font-bold">{user.name} 🙏</h1>
             </div>
 
@@ -82,7 +98,7 @@ const Home = () => {
               <span className="bg-yellow-100 text-yellow-700 p-1 rounded">
                 🔥
               </span>{" "}
-              Daily Challenge
+              {t("daily_challenge")}
             </h2>
             <Link to="/simulation/upi">
               <div className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md border border-blue-100 relative overflow-hidden group transition-all duration-300 transform hover:-translate-y-1 cursor-pointer h-full">
@@ -116,7 +132,7 @@ const Home = () => {
               <span className="bg-green-100 text-green-700 p-1 rounded">
                 📢
               </span>{" "}
-              Update
+              {t("update")}
             </h2>
             <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-2xl p-6 text-white shadow-md flex flex-col justify-center h-full relative overflow-hidden">
               <div className="absolute top-0 right-0 opacity-10 transform translate-x-4 -translate-y-4">
@@ -138,52 +154,45 @@ const Home = () => {
         {/* Quick Actions Grid */}
         <div className="">
           <h2 className=" font-bold text-gray-800 mb-4 text-lg">
-            Quick Services
+            {t("quick_services")}
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               {
-                title: "Gov Schemes",
+                title: t("schemes"),
                 icon: <Shield size={24} />,
                 color: "bg-green-100 text-green-700",
                 link: "/services",
-              }, // Added explicit link
+              }, 
               {
-                title: "Find Doctor",
+                title: t("doctors"),
                 icon: "🏥",
                 color: "bg-orange-100 text-orange-700",
                 isTextIcon: true,
                 link: "/services/doctors",
-              }, // UPDATED LINK
+              },
               {
-                title: "Mandi Prices",
+                title: t("mandi"),
                 icon: "💰",
                 color: "bg-yellow-100 text-yellow-700",
                 isTextIcon: true,
                 link: "/services/mandi",
               },
               {
-                title: "Land Records",
-                icon: "📜",
-                color: "bg-teal-100 text-teal-700",
-                isTextIcon: true,
-                link: "#",
-              },
-              {
-                title: "Land Records",
+                title: t("land"),
                 icon: "📜",
                 color: "bg-teal-100 text-teal-700",
                 isTextIcon: true,
                 link: "/services/land-records",
               },
               {
-                title: "Job Card",
+                title: t("job"),
                 icon: <Briefcase size={24} />,
                 color: "bg-orange-100 text-orange-700",
                 link: "/services/rozgar",
               },
               {
-                title: "Complaint",
+                title: t("complaint"),
                 icon: <AlertTriangle size={24} />,
                 color: "bg-rose-100 text-rose-700",
                 link: "/services/complaint",

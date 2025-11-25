@@ -25,9 +25,7 @@ import LandRecords from "./pages/LandRecords";
 import Rozgar from "./pages/Rozgar";
 import Complaint from "./pages/Complaint";
 import OfflineBanner from './components/OfflineBanner';
-/* // Placeholders
-const Learn = () => <div className="p-8 text-center text-gray-500">Course Library Coming Soon</div>;
-const Profile = () => <div className="p-8 text-center text-gray-500">User Profile Settings</div>; */
+import { useLanguage } from './context/LanguageContext'; 
 
 // --- Protected Route Wrapper ---
 const ProtectedRoute = ({ children, roleRequired }) => {
@@ -39,13 +37,14 @@ const ProtectedRoute = ({ children, roleRequired }) => {
 
   return children;
 };
+
 // --- DESKTOP SIDEBAR ---
 const Sidebar = () => {
   const location = useLocation();
-  const navigate = useNavigate(); // Hook for redirection
+  const navigate = useNavigate(); 
   const isActive = (path) => location.pathname === path;
+  const { t } = useLanguage(); // Add Translation Hook
 
-  // --- LOGOUT LOGIC ---
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
@@ -76,11 +75,12 @@ const Sidebar = () => {
       </div>
 
       <nav className="space-y-2 flex-1">
-        <NavItem to="/" icon={HomeIcon} label="Dashboard" />
-        <NavItem to="/services" icon={Grid} label="Practice" />
-        <NavItem to="/learn" icon={BookOpen} label="Learn" />
-        <NavItem to="/admin" icon={User} label="Admin View" />
-        <NavItem to="/profile" icon={User} label="Profile" />
+        {/* Use t() for labels */}
+        <NavItem to="/" icon={HomeIcon} label={t('dashboard')} />
+        <NavItem to="/services" icon={Grid} label={t('practice')} />
+        <NavItem to="/learn" icon={BookOpen} label={t('learn')} />
+        <NavItem to="/admin" icon={User} label={t('admin')} />
+        <NavItem to="/profile" icon={User} label={t('profile')} />
       </nav>
 
       <div className="mt-auto pt-4 border-t border-gray-100">
@@ -89,7 +89,7 @@ const Sidebar = () => {
           className="flex items-center gap-3 px-4 py-2 text-red-500 hover:bg-red-50 rounded-xl w-full transition cursor-pointer"
         >
           <LogOut size={20} />
-          <span className="font-medium">Logout</span>
+          <span className="font-medium">{t('logout')}</span>
         </button>
       </div>
     </div>
@@ -100,8 +100,8 @@ const Sidebar = () => {
 const BottomNav = () => {
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
+  const { t } = useLanguage(); // Add Translation Hook
 
-  // Hide on simulation page or Admin page (Admin usually desktop)
   if (location.pathname.includes("/simulation")) return null;
 
   const NavItem = ({ to, icon: Icon, label }) => (
@@ -118,10 +118,10 @@ const BottomNav = () => {
 
   return (
     <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 h-16 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 flex justify-around items-center px-2">
-      <NavItem to="/" icon={HomeIcon} label="Home" />
-      <NavItem to="/learn" icon={BookOpen} label="Learn" />
-      <NavItem to="/services" icon={Grid} label="Practice" />
-      <NavItem to="/profile" icon={User} label="Profile" />
+      <NavItem to="/" icon={HomeIcon} label={t('dashboard')} />
+      <NavItem to="/learn" icon={BookOpen} label={t('learn')} />
+      <NavItem to="/services" icon={Grid} label={t('practice')} />
+      <NavItem to="/profile" icon={User} label={t('profile')} />
     </div>
   );
 };
@@ -131,7 +131,6 @@ function App() {
     <Router>
       <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
         <OfflineBanner />
-        {/* Only show Sidebar if logged in */}
         {localStorage.getItem("token") && <Sidebar />}
 
         <div
@@ -142,11 +141,9 @@ function App() {
           }
         >
           <Routes>
-            {/* Public Route: Landing Page is now the Default Home */}
             <Route
               path="/"
               element={
-                // If logged in -> Go to Dashboard, else -> Show Landing
                 localStorage.getItem("token") ? (
                   <Navigate to="/dashboard" />
                 ) : (
@@ -155,7 +152,6 @@ function App() {
               }
             />
             <Route path="/login" element={<Login />} />
-            {/* Protected Routes */}
             <Route
               path="/dashboard"
               element={
@@ -163,8 +159,7 @@ function App() {
                   <Home />
                 </ProtectedRoute>
               }
-            />{" "}
-            {/* Renamed Home to Dashboard */}
+            />
             <Route
               path="/learn"
               element={
@@ -197,7 +192,6 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* Admin Route */}
             <Route
               path="/admin"
               element={

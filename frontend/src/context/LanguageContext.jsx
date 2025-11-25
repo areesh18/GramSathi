@@ -4,24 +4,60 @@ const LanguageContext = createContext();
 
 const translations = {
   en: {
+    // Auth
     welcome: "Welcome",
-    practice: "Practice Mode",
     login: "Login",
     guest: "Continue as Guest",
-    offline_mode: "You are offline. Some features may be limited.",
+    offline_mode: "You are offline. Using limited mode.",
+    
+    // Navigation
     dashboard: "Dashboard",
+    practice: "Practice",
     learn: "Learn",
-    services: "Services"
+    admin: "Admin",
+    profile: "Profile",
+    logout: "Logout",
+    
+    // Headings
+    daily_challenge: "Daily Challenge",
+    update: "Govt Update",
+    quick_services: "Quick Services",
+    
+    // Services
+    schemes: "Gov Schemes",
+    doctors: "Find Doctor",
+    mandi: "Mandi Prices",
+    land: "Land Records",
+    job: "Job Card",
+    complaint: "Complaint"
   },
   hi: {
+    // Auth
     welcome: "नमस्ते",
-    practice: "अभ्यास मोड",
     login: "लॉग इन करें",
-    guest: "गेस्ट के रूप में जारी रखें",
-    offline_mode: "आप ऑफ़लाइन हैं। कुछ सुविधाएँ सीमित हो सकती हैं।",
-    dashboard: "डैशबोर्ड",
+    guest: "गेस्ट मोड (बिना इंटरनेट)",
+    offline_mode: "आप ऑफ़लाइन हैं। सीमित मोड सक्रिय है।",
+    
+    // Navigation
+    dashboard: "होम",
+    practice: "अभ्यास",
     learn: "सीखें",
-    services: "सेवाएं"
+    admin: "एडमिन",
+    profile: "प्रोफ़ाइल",
+    logout: "लॉग आउट",
+    
+    // Headings
+    daily_challenge: "आज की चुनौती",
+    update: "सरकारी अपडेट",
+    quick_services: "सुविधाएं",
+    
+    // Services
+    schemes: "योजनाएं",
+    doctors: "डॉक्टर खोजें",
+    mandi: "मंडी भाव",
+    land: "जमीन का रिकॉर्ड",
+    job: "जॉब कार्ड",
+    complaint: "शिकायत"
   }
 };
 
@@ -29,7 +65,8 @@ export const LanguageProvider = ({ children }) => {
   const [lang, setLang] = useState('en');
 
   const t = (key) => {
-    return translations[lang][key] || key;
+    // Fallback logic: Check current lang -> Check English -> Return key
+    return translations[lang][key] || translations['en'][key] || key;
   };
 
   return (

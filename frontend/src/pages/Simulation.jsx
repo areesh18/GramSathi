@@ -1,26 +1,44 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Camera, Check, Smartphone, CreditCard } from "lucide-react";
+import { ArrowLeft, Camera, Check, Smartphone, CreditCard, WifiOff } from "lucide-react";
 
 const UPISimulation = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [amount, setAmount] = useState("");
   const [pin, setPin] = useState("");
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+
+  useEffect(() => {
+    const handleStatus = () => setIsOffline(!navigator.onLine);
+    window.addEventListener("online", handleStatus);
+    window.addEventListener("offline", handleStatus);
+    return () => {
+      window.removeEventListener("online", handleStatus);
+      window.removeEventListener("offline", handleStatus);
+    };
+  }, []);
 
   const handleComplete = async () => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
     const token = localStorage.getItem('token');
+
+    // OFFLINE HANDLING: Simulate success for Guest/Offline users
+    if (isOffline || !token || token === 'guest-token') {
+       alert("🎉 Practice Complete! (Offline Mode - Points will sync later)");
+       navigate("/");
+       return;
+    }
 
     try {
       const response = await fetch('http://localhost:8080/api/progress', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` // <--- THE KEY CHANGE
+          'Authorization': `Bearer ${token}` 
         },
         body: JSON.stringify({
-          user_id: storedUser.id, // Use real ID
+          user_id: storedUser.id, 
           module_id: 'upi',
           points: 50
         })
@@ -30,11 +48,15 @@ const UPISimulation = () => {
         alert("🎉 Success! 50 Points Added to your Profile.");
         navigate("/");
       } else {
-        alert("Error saving progress");
+        // Fallback if server error
+        alert("Practice Complete! (Server Unreachable)");
+        navigate("/");
       }
     } catch (error) {
       console.error("Backend offline?", error);
-      alert("Could not connect to server");
+      // Fallback for network error
+      alert("Practice Complete! (Offline Mode)");
+      navigate("/");
     }
   };
 
@@ -46,7 +68,7 @@ const UPISimulation = () => {
           <button onClick={() => navigate("/")}>
             <ArrowLeft />
           </button>
-          <h1 className="font-bold">Practice Mode</h1>
+          <h1 className="font-bold">Practice Mode {isOffline && "(Offline)"}</h1>
         </div>
 
         {/* --- STEP 1: SCANNER INSTRUCTION --- */}
@@ -83,12 +105,25 @@ const UPISimulation = () => {
               onClick={() => setStep(3)}
               className="w-72 h-72 border-4 border-green-500 rounded-3xl bg-white/10 backdrop-blur-sm cursor-pointer relative overflow-hidden group"
             >
-              {/* Fake QR */}
-              <img
-                src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=GramSathiDemo"
-                alt="Scan Me"
-                className="opacity-80 w-full h-full p-6"
-              />
+              {/* Fake QR - Handle Offline Case */}
+              {isOffline ? (
+                <div className="w-full h-full bg-white p-6 flex items-center justify-center">
+                    <div className="border-4 border-black p-2">
+                        <div className="grid grid-cols-2 gap-2">
+                            <div className="w-10 h-10 bg-black"></div>
+                            <div className="w-10 h-10 bg-black"></div>
+                            <div className="w-10 h-10 bg-black"></div>
+                            <div className="w-10 h-10 bg-gray-300"></div>
+                        </div>
+                    </div>
+                </div>
+              ) : (
+                <img
+                    src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=GramSathiDemo"
+                    alt="Scan Me"
+                    className="opacity-80 w-full h-full p-6 bg-white"
+                />
+              )}
 
               {/* Click Hint Overlay */}
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-active:bg-black/20">
@@ -97,6 +132,7 @@ const UPISimulation = () => {
                 </span>
               </div>
             </div>
+            {isOffline && <p className="text-white mt-4 text-sm"><WifiOff className="inline w-4 h-4 mr-1"/> Offline QR Mode</p>}
             <button
               onClick={() => setStep(1)}
               className="mt-12 text-white opacity-70"
