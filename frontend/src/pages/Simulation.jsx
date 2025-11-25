@@ -52,7 +52,7 @@ const UPISimulation = () => {
 
     if (isOffline || !token || token === 'guest-token') {
        alert("🎉 Practice Complete! (Offline Mode - Points will sync later)");
-       navigate("/");
+       navigate("/dashboard");
        return;
     }
 
