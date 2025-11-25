@@ -7,6 +7,7 @@ import {
   Smartphone,
   Trophy,
   ChevronRight,
+  Briefcase,
 } from "lucide-react";
 
 const Home = () => {
@@ -173,6 +174,12 @@ const Home = () => {
                 color: "bg-teal-100 text-teal-700",
                 isTextIcon: true,
                 link: "/services/land-records",
+              },
+              {
+                title: "Job Card",
+                icon: <Briefcase size={24} />,
+                color: "bg-orange-100 text-orange-700",
+                link: "/services/rozgar",
               },
             ].map((item, idx) => (
               <Link
