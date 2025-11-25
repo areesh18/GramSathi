@@ -2,10 +2,9 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Home as HomeIcon, BookOpen, Grid, User } from 'lucide-react';
 import Home from './pages/Home';
-
+import Services from './pages/Services';
 // --- Components for other pages (Placeholders for now) ---
 const Learn = () => <div className="p-8 text-center text-gray-500">Course Library Coming Soon</div>;
-const Services = () => <div className="p-8 text-center text-gray-500">All Services Page</div>;
 const Profile = () => <div className="p-8 text-center text-gray-500">User Profile Settings</div>;
 
 // --- Bottom Navigation Component ---
