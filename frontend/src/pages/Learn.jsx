@@ -1,6 +1,7 @@
 import React from "react";
 import { Play } from "lucide-react";
-
+import { Link } from "react-router-dom";
+import { Award } from "lucide-react";
 const courses = [
   {
     id: 1,
