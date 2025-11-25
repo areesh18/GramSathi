@@ -95,7 +95,7 @@ export const syncOfflineActions = async () => {
   }
 };
 
-// --- 2. AUDIO ACCESSIBILITY ---
+// --- 2. AUDIO ACCESSIBILITY (Modified to prioritize female voice) ---
 
 /**
  * Text-to-Speech helper.
@@ -115,14 +115,26 @@ export const speak = (text, lang = "hi-IN") => {
   utterance.rate = 0.9; // Slightly slower for clarity
   utterance.pitch = 1;
 
-  // Attempt to find a matching voice for the requested language
   const voices = window.speechSynthesis.getVoices();
-  // We look for a voice that includes the language code (e.g., "hi" or "en")
-  // Ideally, we prioritize Google voices if available as they are higher quality
-  const bestVoice = voices.find((v) => v.lang.includes(lang.split("-")[0]));
+  // Use only the primary language code (e.g., 'hi' from 'hi-IN') for matching
+  const langCode = lang.split("-")[0];
 
-  if (bestVoice) {
-    utterance.voice = bestVoice;
+  // 1. Prioritize a female voice matching the language code (for consistent Hindi voice)
+  let targetVoice = voices.find(
+    (v) =>
+      v.lang.includes(langCode) &&
+      (v.name.toLowerCase().includes("female") ||
+        v.name.toLowerCase().includes("zira"))
+  );
+
+  // 2. Fallback: Find any voice that supports the language code
+  if (!targetVoice) {
+    targetVoice = voices.find((v) => v.lang.includes(langCode));
+  }
+
+  // 3. Apply the found voice
+  if (targetVoice) {
+    utterance.voice = targetVoice;
   }
 
   window.speechSynthesis.speak(utterance);

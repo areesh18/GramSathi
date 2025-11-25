@@ -35,15 +35,16 @@ export default defineConfig({
       workbox: {
         runtimeCaching: [
           {
-            // 1. Cache Google Fonts and External Images
+            // 1. Cache Google Fonts and External Images (YouTube Thumbnails)
+            // Uses CacheFirst to ensure media loads even when completely offline.
             urlPattern:
-              /^https:\/\/(fonts\.googleapis\.com|img\.youtube\.com)\/.*/i,
-            handler: "StaleWhileRevalidate",
+              /^https:\/\/(fonts\.googleapis\.com|img\.youtube\.com|i\.ytimg\.com)\/.*/i,
+            handler: "CacheFirst",
             options: {
               cacheName: "external-resources",
               expiration: {
-                maxEntries: 20,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+                maxEntries: 30,
+                maxAgeSeconds: 60 * 60 * 24 * 60, // 60 days
               },
             },
           },
