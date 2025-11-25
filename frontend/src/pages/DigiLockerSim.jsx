@@ -30,28 +30,71 @@ const DigiLockerSim = () => {
   // Voice helper
   const playGuide = (text) => speak(text, "hi-IN");
 
-  useEffect(() => {
-    playGuide("DigiLocker practice mein swagat hai. Kripya login karein.");
-    return () => window.speechSynthesis.cancel();
-  }, []);
-
-  // Analytics helper
-  const logSuccess = async () => {
+  // --- NEW: Analytics Helper ---
+  const logActivity = async (action) => {
     const storedUser = JSON.parse(localStorage.getItem("user"));
     const token = localStorage.getItem("token");
-    if (token && token !== "guest-token") {
-      await fetch("http://localhost:8080/api/progress", {
+
+    if (!storedUser || !token) return;
+
+    const payload = {
+      user_id: storedUser.id,
+      module_id: "sim_digilocker",
+      action: action, // e.g., "started", "failed_otp", "completed"
+    };
+
+    // Skip logging if offline to save bandwidth/queue space
+    if (!navigator.onLine) return;
+
+    try {
+      await fetch("http://localhost:8080/api/log", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          user_id: storedUser.id,
-          module_id: "sim_digilocker",
-          points: 50,
-        }),
-      }).catch((err) => console.error(err));
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      console.error("Logging failed", err);
+    }
+  };
+
+  useEffect(() => {
+    playGuide("DigiLocker practice mein swagat hai. Kripya login karein.");
+    logActivity("started"); // Log when user enters the simulation
+    return () => window.speechSynthesis.cancel();
+  }, []);
+
+  // Analytics & Progress helper
+  const logSuccess = async () => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const token = localStorage.getItem("token");
+
+    // 1. Log Completion Activity
+    logActivity("completed");
+
+    // 2. Award Points (Progress)
+    if (token && token !== "guest-token") {
+      const payload = {
+        user_id: storedUser.id,
+        module_id: "sim_digilocker",
+        points: 50,
+      };
+
+      try {
+        await fetch("http://localhost:8080/api/progress", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(payload),
+        });
+      } catch (err) {
+        console.error("Progress save failed", err);
+        saveOfflineAction("/api/progress", "POST", payload);
+      }
     }
   };
 
@@ -62,9 +105,11 @@ const DigiLockerSim = () => {
       playGuide(
         "Safalta poorvak login hua. Ab naye document khojein ya maujooda dekhein."
       );
+      logActivity("login_success");
     } else {
       playGuide("Galat OTP! Kripya phir se koshish karein. Hint: 1234");
       alert("Wrong OTP! Try 1234 (Simulation)");
+      logActivity("failed_otp"); // Log failure for Admin Dashboard
     }
   };
 
@@ -75,7 +120,7 @@ const DigiLockerSim = () => {
         { id: 3, title: "COVID Vaccine Cert", issuer: "MoHFW", date: "Today" },
       ]);
       setStep(2);
-      logSuccess();
+      logSuccess(); // Award points and log completion
       alert("🎉 Document Fetched Successfully! (+50 Points)");
       playGuide(
         "Document safalta poorvak mil gaya hai. Aapne 50 points kamaye hain."

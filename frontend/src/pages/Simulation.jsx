@@ -22,6 +22,38 @@ const UPISimulation = () => {
   // Audio helper
   const playGuide = (text) => speak(text, "hi-IN");
 
+  // --- NEW: Analytics Helper ---
+  const logActivity = async (action) => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const token = localStorage.getItem("token");
+
+    if (!storedUser || !token) return;
+
+    const payload = {
+      user_id: storedUser.id,
+      module_id: "upi",
+      action: action, // e.g. "started", "failed_pin", "completed"
+    };
+
+    if (!navigator.onLine) {
+      // Optionally queue logs too, but for now we just skip
+      return;
+    }
+
+    try {
+      await fetch("http://localhost:8080/api/log", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      console.error("Logging failed", err);
+    }
+  };
+
   useEffect(() => {
     const handleStatus = () => setIsOffline(!navigator.onLine);
     window.addEventListener("online", handleStatus);
@@ -30,6 +62,9 @@ const UPISimulation = () => {
     playGuide(
       "UPI practice mein swagat hai. Shuru karne ke liye button dabayein."
     );
+
+    // Log entry
+    logActivity("viewed_page");
 
     return () => {
       window.removeEventListener("online", handleStatus);
@@ -48,6 +83,8 @@ const UPISimulation = () => {
       playGuide("Galat PIN. Kripya phir se koshish karein.");
       alert("Wrong PIN! Try 1234.");
       setPin("");
+      // Log failure for analytics
+      logActivity("failed_pin_attempt");
     }
   };
 
@@ -58,6 +95,11 @@ const UPISimulation = () => {
 
     // Award different points based on activity
     const points = mode === "pay" ? 50 : 30; // Pay gets 50, balance check gets 30
+
+    // Log completion for analytics
+    logActivity(
+      mode === "pay" ? "completed_payment" : "completed_balance_check"
+    );
 
     const payload = {
       user_id: storedUser.id,
@@ -151,6 +193,7 @@ const UPISimulation = () => {
                   setMode("pay");
                   setStep(2);
                   playGuide("Payment karne ke liye, QR code scan karein.");
+                  logActivity("started_payment_flow");
                 }}
                 className="w-full bg-blue-600 text-white py-4 rounded-xl font-medium shadow-sm hover:bg-blue-700 mb-3 flex items-center justify-center gap-3 transition-colors"
               >
@@ -162,6 +205,7 @@ const UPISimulation = () => {
                   setMode("balance");
                   setStep(4);
                   playGuide("Apna PIN daalein balance check karne ke liye.");
+                  logActivity("started_balance_flow");
                 }}
                 className="w-full bg-white text-blue-600 border-2 border-blue-600 py-4 rounded-xl font-medium shadow-sm hover:bg-blue-50 flex items-center justify-center gap-3 transition-colors"
               >
@@ -357,7 +401,7 @@ const UPISimulation = () => {
           </div>
         )}
 
-        {/* STEP 6: BALANCE VIEW - FIXED: Now awards points */}
+        {/* STEP 6: BALANCE VIEW */}
         {step === 6 && (
           <div className="fixed inset-0 bg-blue-600 z-50 flex flex-col items-center justify-center text-white p-6">
             <div className="bg-white text-blue-600 p-6 rounded-full mb-6 shadow-xl">

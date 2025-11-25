@@ -24,8 +24,38 @@ const FormSim = () => {
   // Audio helper
   const playHelp = (text) => speak(text, "hi-IN");
 
+  // --- NEW: Analytics Helper ---
+  const logActivity = async (action) => {
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const token = localStorage.getItem("token");
+
+    if (!storedUser || !token) return;
+
+    const payload = {
+      user_id: storedUser.id,
+      module_id: "sim_pm_kisan",
+      action: action,
+    };
+
+    if (!navigator.onLine) return;
+
+    try {
+      await fetch("http://localhost:8080/api/log", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      console.error("Logging failed", err);
+    }
+  };
+
   useEffect(() => {
     playHelp("Pradhan Mantri Kisan Yojana form mein swagat hai.");
+    logActivity("started");
   }, []);
 
   const handleNext = () => {
@@ -35,6 +65,7 @@ const FormSim = () => {
       const msg = "Aadhaar number 12 ank ka hona chahiye.";
       setError(msg);
       playHelp(msg);
+      logActivity("failed_aadhaar_validation");
       return;
     }
 
@@ -42,6 +73,7 @@ const FormSim = () => {
       const msg = "Kripya pehle zameen ke kagaz ki photo upload karein.";
       setError(msg);
       playHelp(msg);
+      logActivity("failed_upload_validation");
       return;
     }
 
@@ -62,9 +94,13 @@ const FormSim = () => {
       points: 50,
     };
 
+    logActivity("completed");
+
     if (!navigator.onLine) {
       saveOfflineAction("/api/progress", "POST", payload);
-      alert("📝 Form Saved Offline! It will submit automatically when internet returns.");
+      alert(
+        "📝 Form Saved Offline! It will submit automatically when internet returns."
+      );
     } else {
       try {
         if (token && token !== "guest-token") {
@@ -93,14 +129,16 @@ const FormSim = () => {
       <div className="bg-white border-b border-gray-100 px-4 py-4">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <button 
+            <button
               onClick={() => navigate(-1)}
               className="p-2 hover:bg-gray-50 rounded-lg transition-colors"
             >
               <ArrowLeft size={20} className="text-gray-700" />
             </button>
             <div>
-              <h1 className="text-base font-semibold text-gray-900">PM Kisan Form</h1>
+              <h1 className="text-base font-semibold text-gray-900">
+                PM Kisan Form
+              </h1>
               <p className="text-xs text-gray-500">Step {step} of 4</p>
             </div>
           </div>
@@ -126,9 +164,11 @@ const FormSim = () => {
                 {step > s ? <Check size={16} /> : s}
               </div>
               {s < 4 && (
-                <div className={`flex-1 h-1 mx-2 rounded ${
-                  step > s ? "bg-green-600" : "bg-gray-100"
-                }`}></div>
+                <div
+                  className={`flex-1 h-1 mx-2 rounded ${
+                    step > s ? "bg-green-600" : "bg-gray-100"
+                  }`}
+                ></div>
               )}
             </div>
           ))}
@@ -289,7 +329,9 @@ const FormSim = () => {
             <div className="bg-gray-50 p-4 rounded-xl text-left space-y-3 mb-6 border border-gray-100">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600 text-sm">Scheme:</span>
-                <span className="font-medium text-gray-900 text-sm">PM Kisan Nidhi</span>
+                <span className="font-medium text-gray-900 text-sm">
+                  PM Kisan Nidhi
+                </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600 text-sm">Aadhaar:</span>
