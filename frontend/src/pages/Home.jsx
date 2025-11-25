@@ -144,28 +144,32 @@ const Home = () => {
                 title: "Gov Schemes",
                 icon: <Shield size={24} />,
                 color: "bg-green-100 text-green-700",
-              },
+                link: "/services",
+              }, // Added explicit link
               {
                 title: "Find Doctor",
                 icon: "🏥",
                 color: "bg-orange-100 text-orange-700",
                 isTextIcon: true,
-              },
+                link: "/services/doctors",
+              }, // UPDATED LINK
               {
                 title: "Mandi Prices",
                 icon: "💰",
                 color: "bg-yellow-100 text-yellow-700",
                 isTextIcon: true,
+                link: "/services/mandi",
               },
               {
                 title: "Land Records",
                 icon: "📜",
                 color: "bg-teal-100 text-teal-700",
                 isTextIcon: true,
+                link: "#",
               },
             ].map((item, idx) => (
               <Link
-                to={item.title === "Mandi Prices" ? "/services/mandi" : "#"}
+                to={item.link}
                 key={idx}
                 className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center gap-3 hover:shadow-md hover:border-blue-200 transition cursor-pointer group"
               >

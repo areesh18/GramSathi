@@ -19,6 +19,7 @@ import Login from "./pages/Login";
 import Landing from "./pages/Landing";
 import Mandi from "./pages/Mandi";
 import Quiz from "./pages/Quiz";
+import Doctors from "./pages/Doctors";
 
 /* // Placeholders
 const Learn = () => <div className="p-8 text-center text-gray-500">Course Library Coming Soon</div>;
@@ -213,6 +214,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Quiz />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/services/doctors"
+              element={
+                <ProtectedRoute>
+                  <Doctors />
                 </ProtectedRoute>
               }
             />
