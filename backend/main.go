@@ -14,9 +14,9 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var jwtKey = []byte("hackathon_secret_key_123") // Keep this simple for now
+var jwtKey = []byte("hackathon_secret_key_123")
 
-// --- AUTH STRUCTS ---
+// --- STRUCTS ---
 type Credentials struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
@@ -30,57 +30,42 @@ type Claims struct {
 
 // --- HANDLERS ---
 
-// 1. REGISTER (Create User/Admin)
+// 1. REGISTER: STRICTLY FOR NORMAL USERS
 func Register(w http.ResponseWriter, r *http.Request) {
-    // Define a struct specifically for decoding the request
-    // This allows us to read the password despite the json:"-" tag in the User model
-    var req struct {
-        Name     string `json:"name"`
-        Email    string `json:"email"`
-        Password string `json:"password"`
-        Role     string `json:"role"`
-        Village  string `json:"village"`
-    }
+	var req struct {
+		Name     string `json:"name"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+		Village  string `json:"village"`
+	}
 
-    if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-        http.Error(w, "Invalid request payload", http.StatusBadRequest)
-        return
-    }
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid payload", http.StatusBadRequest)
+		return
+	}
 
-    // Hash Password
-    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-    if err != nil {
-        http.Error(w, "Server error", http.StatusInternalServerError)
-        return
-    }
+	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 
-    // Map to the real User model
-    user := User{
-        Name:     req.Name,
-        Email:    req.Email,
-        Password: string(hashedPassword), // Save the hash
-        Role:     req.Role,
-        Village:  req.Village,
-        // Default values
-        TotalScore: 0, 
-        CreatedAt:  time.Now(),
-    }
-    
-    // Set default role if empty
-    if user.Role == "" {
-        user.Role = "user"
-    }
+	user := User{
+		Name:       req.Name,
+		Email:      req.Email,
+		Password:   string(hashedPassword),
+		Role:       "user", // 🔒 FORCE ROLE TO USER. No one can register as admin.
+		Village:    req.Village,
+		TotalScore: 0,
+		CreatedAt:  time.Now(),
+	}
 
-    if result := DB.Create(&user); result.Error != nil {
-        http.Error(w, "Email already exists", http.StatusBadRequest)
-        return
-    }
-    
-    w.WriteHeader(http.StatusCreated)
-    json.NewEncoder(w).Encode(map[string]string{"message": "User registered!"})
+	if result := DB.Create(&user); result.Error != nil {
+		http.Error(w, "Email already exists", http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{"message": "User registered!"})
 }
 
-// 2. LOGIN (Generate Token)
+// 2. LOGIN
 func Login(w http.ResponseWriter, r *http.Request) {
 	var creds Credentials
 	json.NewDecoder(r.Body).Decode(&creds)
@@ -91,13 +76,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Check Password
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(creds.Password)); err != nil {
 		http.Error(w, "Invalid password", http.StatusUnauthorized)
 		return
 	}
 
-	// Create JWT Token
+	// Issue Token
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
 		UserID: user.ID,
@@ -109,27 +93,22 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, _ := token.SignedString(jwtKey)
 
-	// Return Token + User Info
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"token": tokenString,
 		"user":  user,
 	})
 }
 
-// 3. GET USER (Protected)
+// 3. GET PROFILE
 func GetProfile(w http.ResponseWriter, r *http.Request) {
-	// Extract ID from JWT Middleware context (simplified here by just trusting the request for the hackathon)
-	// Ideally, you grab the ID from the token claims.
-	// For this demo, we will look up the ID passed in the URL, but only if the token is valid.
-	
 	vars := mux.Vars(r)
 	id := vars["id"]
-	
 	var user User
 	DB.First(&user, id)
 	json.NewEncoder(w).Encode(user)
 }
 
+// 4. RECORD SCORE
 func RecordProgress(w http.ResponseWriter, r *http.Request) {
 	var p Progress
 	json.NewDecoder(r.Body).Decode(&p)
@@ -139,15 +118,15 @@ func RecordProgress(w http.ResponseWriter, r *http.Request) {
 	DB.First(&user, p.UserID)
 	user.TotalScore += p.Points
 	DB.Save(&user)
-
 	w.WriteHeader(http.StatusOK)
 }
 
+// 5. ADMIN STATS
 func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 	var totalUsers int64
 	var avgScore float64
-	DB.Model(&User{}).Count(&totalUsers)
-	DB.Model(&User{}).Select("AVG(total_score)").Scan(&avgScore)
+	DB.Model(&User{}).Where("role = ?", "user").Count(&totalUsers) // Count only users, not admins
+	DB.Model(&User{}).Where("role = ?", "user").Select("AVG(total_score)").Scan(&avgScore)
 	json.NewEncoder(w).Encode(map[string]interface{}{"total_users": totalUsers, "avg_score": int(avgScore)})
 }
 
@@ -159,19 +138,15 @@ func IsAuthorized(next http.HandlerFunc) http.HandlerFunc {
 			http.Error(w, "Missing Token", http.StatusUnauthorized)
 			return
 		}
-
 		tokenString := strings.Split(authHeader, "Bearer ")[1]
 		claims := &Claims{}
-
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
 			return jwtKey, nil
 		})
-
 		if err != nil || !token.Valid {
 			http.Error(w, "Invalid Token", http.StatusUnauthorized)
 			return
 		}
-
 		next(w, r)
 	}
 }

@@ -1,9 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { User, MapPin, Award, Download, Share2 } from 'lucide-react';
-
+import { User, MapPin, Award, Download, Share2, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 const Profile = () => {
   const [user, setUser] = useState(null);
-
+    const navigate = useNavigate();
+    const handleLogout = () => {
+    localStorage.clear();
+    navigate('/login');
+  };
   useEffect(() => {
     const storedUser = JSON.parse(localStorage.getItem('user'));
     const token = localStorage.getItem('token');
@@ -98,6 +102,15 @@ const Profile = () => {
             </div>
           )}
         </div>
+      </div>
+      {/* LOGOUT BUTTON (Visible mainly on Mobile) */}
+      <div className="mt-10 pt-6 border-t border-gray-200 md:hidden">
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 py-4 rounded-xl font-bold shadow-sm active:scale-95 transition"
+        >
+          <LogOut size={20} /> Logout
+        </button>
       </div>
     </div>
   );
