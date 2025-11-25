@@ -120,7 +120,7 @@ func RecordProgress(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// 5. ADMIN STATS (UPDATED FOR REAL CHARTS)
+// 5. ADMIN STATS (UPGRADED)
 func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 	// A. Basic Counters
 	var totalUsers int64
@@ -134,33 +134,61 @@ func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 		Users int    `json:"users"`
 	}
 	var trend []MonthlyStat
-	// Note: This query uses Postgres specific syntax (TO_CHAR)
+	// Postgres specific date truncation
 	DB.Model(&User{}).
 		Where("role = ?", "user").
 		Select("TO_CHAR(created_at, 'Mon') as month, count(id) as users").
 		Group("month").
-		Order("MIN(created_at)"). // Keep months in chronological order
+		Order("MIN(created_at)").
 		Scan(&trend)
 
-	// C. Village Impact (Avg Score per Village)
+	// C. Village Impact (Avg Score & User Count)
 	type VillageStat struct {
 		Name  string  `json:"name"`
 		Score float64 `json:"score"`
+		Count int     `json:"count"` // Added count
 	}
 	var villageStats []VillageStat
 	DB.Model(&User{}).
 		Where("role = ?", "user").
-		Select("village as name, AVG(total_score) as score").
+		Select("village as name, AVG(total_score) as score, COUNT(id) as count").
 		Group("village").
-		Limit(5). // Top 5 villages
+		Order("score desc"). // Order by highest score
+		Limit(5).
 		Scan(&villageStats)
+
+	// D. NEW: Module Popularity (What are they learning?)
+	type ModuleStat struct {
+		Name  string `json:"name"`
+		Value int    `json:"value"`
+	}
+	var moduleStats []ModuleStat
+	DB.Model(&Progress{}).
+		Select("module_id as name, COUNT(id) as value").
+		Group("module_id").
+		Scan(&moduleStats)
+
+	// Clean up Module Names for the Chart (Optional cosmetic fix)
+	for i := range moduleStats {
+		switch moduleStats[i].Name {
+		case "upi":
+			moduleStats[i].Name = "UPI Payments"
+		case "quiz_literacy_101":
+			moduleStats[i].Name = "Safety Quiz"
+		case "sim_pm_kisan":
+			moduleStats[i].Name = "PM Kisan Form"
+		case "grievance_filed":
+			moduleStats[i].Name = "Grievance"
+		}
+	}
 
 	// Return combined data
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"total_users": totalUsers,
-		"avg_score":   int(avgScore),
-		"trend":       trend,
-		"villages":    villageStats,
+		"total_users":  totalUsers,
+		"avg_score":    int(avgScore),
+		"trend":        trend,
+		"villages":     villageStats,
+		"module_stats": moduleStats, // <--- New Data Field
 	})
 }
 
@@ -210,7 +238,7 @@ func main() {
 
 	c := cors.New(cors.Options{
 		// CHANGE THIS LINE:
-		AllowedOrigins:   []string{"*"}, 
+		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,

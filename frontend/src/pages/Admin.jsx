@@ -9,16 +9,22 @@ import {
   LineChart,
   Line,
   CartesianGrid,
+  PieChart,
+  Pie,
+  Cell,
+  Legend
 } from 'recharts';
-import { Users, TrendingUp, MapPin } from 'lucide-react';
+import { Users, TrendingUp, MapPin, Activity, Download } from 'lucide-react';
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
 const Admin = () => {
-  // Initial State now includes empty arrays for charts
   const [stats, setStats] = useState({ 
     total_users: 0, 
     avg_score: 0, 
     trend: [], 
-    villages: [] 
+    villages: [],
+    module_stats: [] // New State
   });
 
   useEffect(() => {
@@ -31,135 +37,145 @@ const Admin = () => {
       })
       .then((res) => res.json())
       .then((data) => {
-        // Ensure we handle null/empty data gracefully
         setStats({
           total_users: data.total_users || 0,
           avg_score: data.avg_score || 0,
           trend: data.trend || [],
-          villages: data.villages || []
+          villages: data.villages || [],
+          module_stats: data.module_stats || []
         });
       })
       .catch((err) => console.error('Admin fetch error:', err));
     };
 
     fetchStats();
-    // Optional: Refresh every 5 seconds to see live updates
-    const interval = setInterval(fetchStats, 5000);
+    const interval = setInterval(fetchStats, 5000); // Live updates
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100 p-4 sm:p-6 md:p-8 font-sans">
+    <div className="min-h-screen bg-slate-50 p-4 sm:p-6 md:p-8 font-sans pb-20">
       {/* HEADER */}
-      <header className="flex flex-col md:flex-row justify-between items-center gap-4 mb-10">
-        <div className="text-center md:text-left">
-          <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
-            GramSathi <br className="sm:hidden" />
-            <span className="text-blue-600">Analytics</span> 🇮🇳
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">
+            District Dashboard 🇮🇳
           </h1>
-          <p className="text-sm text-slate-500">
-            Real-time Digital Literacy Dashboard
-          </p>
+          <p className="text-slate-500">Digital Literacy & Adoption Analytics</p>
         </div>
-
-        <div className="px-4 py-2 rounded-full bg-green-100 text-green-700 font-bold text-sm flex items-center gap-2 shadow-sm">
-          <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span>
-          Live Updating
+        <div className="flex gap-3">
+            <button className="bg-white border border-slate-300 text-slate-600 px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2 hover:bg-slate-50">
+                <Download size={16} /> Export Report
+            </button>
+            <div className="bg-green-100 text-green-700 px-4 py-2 rounded-lg font-bold text-sm flex items-center gap-2">
+                <Activity size={16} className="animate-pulse" /> Live System
+            </div>
         </div>
       </header>
 
       {/* KPI CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-        <div className="bg-white rounded-xl p-6 shadow-md border border-slate-200 flex flex-col items-center gap-3 min-h-[140px]">
-          <div className="p-3 bg-blue-100 text-blue-600 rounded-lg">
-            <Users size={24} />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <StatCard 
+            icon={<Users size={24} />} 
+            label="Total Beneficiaries" 
+            value={stats.total_users} 
+            color="bg-blue-500" 
+        />
+        <StatCard 
+            icon={<TrendingUp size={24} />} 
+            label="Avg Literacy Score" 
+            value={`${stats.avg_score}/100`} 
+            color="bg-green-500" 
+        />
+        <StatCard 
+            icon={<MapPin size={24} />} 
+            label="Active Villages" 
+            value={stats.villages.length} 
+            color="bg-purple-500" 
+        />
+        <StatCard 
+            icon={<Activity size={24} />} 
+            label="Modules Completed" 
+            value={stats.module_stats.reduce((acc, curr) => acc + curr.value, 0)} 
+            color="bg-orange-500" 
+        />
+      </div>
+
+      {/* ROW 1: Trend & Skills */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        {/* Line Chart (2/3 width) */}
+        <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 className="text-lg font-bold text-slate-800 mb-4">Adoption Trend (New Registrations)</h3>
+          <div className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={stats.trend}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                <YAxis axisLine={false} tickLine={false} />
+                <Tooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                <Line type="monotone" dataKey="users" stroke="#3b82f6" strokeWidth={4} dot={{ r: 4, fill: '#3b82f6', strokeWidth: 2, stroke: '#fff' }} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
-          <p className="text-slate-500 text-sm text-center">Total Villagers</p>
-          <h3 className="text-3xl font-extrabold text-slate-800">
-            {stats.total_users}
-          </h3>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-md border border-slate-200 flex flex-col items-center gap-3 min-h-[140px]">
-          <div className="p-3 bg-orange-100 text-orange-600 rounded-lg">
-            <TrendingUp size={24} />
+        {/* Pie Chart (1/3 width) */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 className="text-lg font-bold text-slate-800 mb-4">Skill Distribution</h3>
+          <div className="h-72">
+             <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={stats.module_stats}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                  >
+                    {stats.module_stats.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend verticalAlign="bottom" height={36}/>
+                </PieChart>
+             </ResponsiveContainer>
           </div>
-          <p className="text-slate-500 text-sm text-center">
-            Avg Literacy Score
-          </p>
-          <h3 className="text-3xl font-extrabold text-slate-800">
-            {stats.avg_score} / 100
-          </h3>
-        </div>
-
-        <div className="bg-white rounded-xl p-6 shadow-md border border-slate-200 flex flex-col items-center gap-3 min-h-[140px]">
-          <div className="p-3 bg-purple-100 text-purple-600 rounded-lg">
-            <MapPin size={24} />
-          </div>
-          <p className="text-slate-500 text-sm text-center">Active Villages</p>
-          <h3 className="text-3xl font-extrabold text-slate-800">{stats.villages.length}</h3>
         </div>
       </div>
 
-      {/* CHARTS */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Line Chart: Adoption Trend */}
-        <div className="bg-white p-6 rounded-xl shadow-md border border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-700 mb-4">
-            Adoption Trend (Monthly)
-          </h3>
-          <div className="h-72 sm:h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              {stats.trend.length > 0 ? (
-                <LineChart data={stats.trend}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" />
-                  <YAxis allowDecimals={false} />
-                  <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="users"
-                    stroke="#2563eb"
-                    strokeWidth={3}
-                    dot={{ r: 5 }}
-                  />
-                </LineChart>
-              ) : (
-                <div className="h-full flex items-center justify-center text-gray-400">
-                  No data yet. Register a user to see trend.
-                </div>
-              )}
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Bar Chart: Impact by Region */}
-        <div className="bg-white p-6 rounded-xl shadow-md border border-slate-200">
-          <h3 className="text-lg font-semibold text-slate-700 mb-4">
-            Impact by Region (Avg Score)
-          </h3>
-          <div className="h-72 sm:h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              {stats.villages.length > 0 ? (
-                <BarChart data={stats.villages}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="score" fill="#10b981" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              ) : (
-                <div className="h-full flex items-center justify-center text-gray-400">
-                  No village data available.
-                </div>
-              )}
-            </ResponsiveContainer>
-          </div>
+      {/* ROW 2: Village Leaderboard */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <h3 className="text-lg font-bold text-slate-800 mb-4">Village Performance Leaderboard</h3>
+        <div className="h-64">
+           <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={stats.villages}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} />
+                <YAxis axisLine={false} tickLine={false} />
+                <Tooltip cursor={{ fill: '#f1f5f9' }} />
+                <Bar dataKey="score" name="Avg Score" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={50} />
+              </BarChart>
+           </ResponsiveContainer>
         </div>
       </div>
     </div>
   );
 };
+
+// Helper Component for consistency
+const StatCard = ({ icon, label, value, color }) => (
+    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 flex items-center gap-4">
+        <div className={`${color} w-12 h-12 rounded-lg flex items-center justify-center text-white shadow-md`}>
+            {icon}
+        </div>
+        <div>
+            <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">{label}</p>
+            <h3 className="text-2xl font-black text-slate-800">{value}</h3>
+        </div>
+    </div>
+);
 
 export default Admin;
