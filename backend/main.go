@@ -163,7 +163,16 @@ func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 		"villages":    villageStats,
 	})
 }
-
+// --- NEW HANDLER ---
+func GetSchemes(w http.ResponseWriter, r *http.Request) {
+	var schemes []Scheme
+	// Fetch all schemes
+	if result := DB.Find(&schemes); result.Error != nil {
+		http.Error(w, "Server Error", http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(schemes)
+}
 // --- MIDDLEWARE ---
 func IsAuthorized(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -195,6 +204,7 @@ func main() {
 	r.HandleFunc("/api/user/{id}", IsAuthorized(GetProfile)).Methods("GET")
 	r.HandleFunc("/api/progress", IsAuthorized(RecordProgress)).Methods("POST")
 	r.HandleFunc("/api/admin/stats", IsAuthorized(GetAdminStats)).Methods("GET")
+	r.HandleFunc("/api/schemes", IsAuthorized(GetSchemes)).Methods("GET")
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173"},

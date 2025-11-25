@@ -13,7 +13,6 @@ import (
 var DB *gorm.DB
 
 func InitDB() {
-	// ⚠️ UPDATE PASSWORD IF NEEDED
 	dsn := "host=localhost user=postgres password=postgres123 dbname=gramsathi port=5432 sslmode=disable"
 
 	var err error
@@ -22,44 +21,42 @@ func InitDB() {
 		log.Fatal("Failed to connect to database:", err)
 	}
 
-	DB.AutoMigrate(&User{}, &Progress{})
+	// AutoMigrate the NEW Scheme struct
+	DB.AutoMigrate(&User{}, &Progress{}, &Scheme{})
 	fmt.Println("🚀 Database connected!")
 
-	// --- 1. SEED MOCK ADMIN (The only way to get an admin account) ---
+	// --- SEED ADMIN & USER (Keep existing code) ---
 	var adminCount int64
 	DB.Model(&User{}).Where("role = ?", "admin").Count(&adminCount)
 	if adminCount == 0 {
-		// Hash the password "admin123"
 		hash, _ := bcrypt.GenerateFromPassword([]byte("admin123"), bcrypt.DefaultCost)
-
-		admin := User{
-			Name:       "District Admin",
-			Email:      "admin@gramsathi.in",
-			Password:   string(hash),
-			Role:       "admin",
-			Village:    "District HQ",
-			TotalScore: 100,
-			CreatedAt:  time.Now(),
-		}
+		admin := User{Name: "District Admin", Email: "admin@gramsathi.in", Password: string(hash), Role: "admin", Village: "District HQ", TotalScore: 100, CreatedAt: time.Now()}
 		DB.Create(&admin)
-		fmt.Println("🛡️  Seeded Admin User: admin@gramsathi.in / admin123")
+		fmt.Println("🛡️  Seeded Admin User")
 	}
 
-	// --- 2. SEED DEMO USER (Optional, for quick testing) ---
 	var userCount int64
 	DB.Model(&User{}).Where("role = ?", "user").Count(&userCount)
 	if userCount == 0 {
 		hash, _ := bcrypt.GenerateFromPassword([]byte("123456"), bcrypt.DefaultCost)
-		user := User{
-			Name:       "Rajesh Kumar",
-			Email:      "rajesh@village.in",
-			Password:   string(hash),
-			Role:       "user",
-			Village:    "Rampur",
-			TotalScore: 0,
-			CreatedAt:  time.Now(),
-		}
+		user := User{Name: "Rajesh Kumar", Email: "rajesh@village.in", Password: string(hash), Role: "user", Village: "Rampur", TotalScore: 0, CreatedAt: time.Now()}
 		DB.Create(&user)
-		fmt.Println("👤 Seeded Normal User: rajesh@village.in / 123456")
+		fmt.Println("👤 Seeded Normal User")
+	}
+
+	// --- NEW: SEED SCHEMES ---
+	var schemeCount int64
+	DB.Model(&Scheme{}).Count(&schemeCount)
+	if schemeCount == 0 {
+		schemes := []Scheme{
+			{Title: "PM Kisan Nidhi", Category: "gov", Color: "bg-green-100 text-green-700", Icon: "🌾", Description: "Financial support for farmers"},
+			{Title: "Crop Insurance", Category: "agri", Color: "bg-yellow-100 text-yellow-700", Icon: "🛡️", Description: "Protect crops from damage"},
+			{Title: "Tele-Medicine", Category: "health", Color: "bg-blue-100 text-blue-700", Icon: "👨‍⚕️", Description: "Consult doctors online"},
+			{Title: "Practice UPI", Category: "finance", Color: "bg-purple-100 text-purple-700", Icon: "💸", Description: "Learn digital payments"},
+			{Title: "Mandi Prices", Category: "agri", Color: "bg-orange-100 text-orange-700", Icon: "💰", Description: "Live market rates"},
+			{Title: "DigiLocker", Category: "gov", Color: "bg-indigo-100 text-indigo-700", Icon: "📂", Description: "Store documents digitally"},
+		}
+		DB.Create(&schemes)
+		fmt.Println("📜 Seeded Schemes Data")
 	}
 }
