@@ -30,7 +30,7 @@ type Claims struct {
 
 // --- HANDLERS ---
 
-// 1. REGISTER: STRICTLY FOR NORMAL USERS
+// 1. REGISTER
 func Register(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Name     string `json:"name"`
@@ -50,7 +50,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		Name:       req.Name,
 		Email:      req.Email,
 		Password:   string(hashedPassword),
-		Role:       "user", // 🔒 FORCE ROLE TO USER. No one can register as admin.
+		Role:       "user",
 		Village:    req.Village,
 		TotalScore: 0,
 		CreatedAt:  time.Now(),
@@ -81,7 +81,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Issue Token
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
 		UserID: user.ID,
@@ -121,13 +120,48 @@ func RecordProgress(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// 5. ADMIN STATS
+// 5. ADMIN STATS (UPDATED FOR REAL CHARTS)
 func GetAdminStats(w http.ResponseWriter, r *http.Request) {
+	// A. Basic Counters
 	var totalUsers int64
 	var avgScore float64
-	DB.Model(&User{}).Where("role = ?", "user").Count(&totalUsers) // Count only users, not admins
-	DB.Model(&User{}).Where("role = ?", "user").Select("AVG(total_score)").Scan(&avgScore)
-	json.NewEncoder(w).Encode(map[string]interface{}{"total_users": totalUsers, "avg_score": int(avgScore)})
+	DB.Model(&User{}).Where("role = ?", "user").Count(&totalUsers)
+	DB.Model(&User{}).Where("role = ?", "user").Select("COALESCE(AVG(total_score), 0)").Scan(&avgScore)
+
+	// B. Adoption Trend (Users per Month)
+	type MonthlyStat struct {
+		Month string `json:"name"`
+		Users int    `json:"users"`
+	}
+	var trend []MonthlyStat
+	// Note: This query uses Postgres specific syntax (TO_CHAR)
+	DB.Model(&User{}).
+		Where("role = ?", "user").
+		Select("TO_CHAR(created_at, 'Mon') as month, count(id) as users").
+		Group("month").
+		Order("MIN(created_at)"). // Keep months in chronological order
+		Scan(&trend)
+
+	// C. Village Impact (Avg Score per Village)
+	type VillageStat struct {
+		Name  string  `json:"name"`
+		Score float64 `json:"score"`
+	}
+	var villageStats []VillageStat
+	DB.Model(&User{}).
+		Where("role = ?", "user").
+		Select("village as name, AVG(total_score) as score").
+		Group("village").
+		Limit(5). // Top 5 villages
+		Scan(&villageStats)
+
+	// Return combined data
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"total_users": totalUsers,
+		"avg_score":   int(avgScore),
+		"trend":       trend,
+		"villages":    villageStats,
+	})
 }
 
 // --- MIDDLEWARE ---
@@ -155,11 +189,9 @@ func main() {
 	InitDB()
 	r := mux.NewRouter()
 
-	// Public Routes
 	r.HandleFunc("/api/register", Register).Methods("POST")
 	r.HandleFunc("/api/login", Login).Methods("POST")
 
-	// Protected Routes (Wrapped in IsAuthorized)
 	r.HandleFunc("/api/user/{id}", IsAuthorized(GetProfile)).Methods("GET")
 	r.HandleFunc("/api/progress", IsAuthorized(RecordProgress)).Methods("POST")
 	r.HandleFunc("/api/admin/stats", IsAuthorized(GetAdminStats)).Methods("GET")
@@ -167,7 +199,7 @@ func main() {
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173"},
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
-		AllowedHeaders:   []string{"Content-Type", "Authorization"}, // Allow Auth Header
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
 	})
 
