@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 
 const LanguageContext = createContext();
 
@@ -62,10 +62,16 @@ const translations = {
 };
 
 export const LanguageProvider = ({ children }) => {
-  const [lang, setLang] = useState('en');
+  // 1. Initialize from localStorage if available
+  const [lang, setLangState] = useState(localStorage.getItem('app_lang') || 'en');
+
+  // 2. Wrapper to save to localStorage whenever lang changes
+  const setLang = (newLang) => {
+    setLangState(newLang);
+    localStorage.setItem('app_lang', newLang);
+  };
 
   const t = (key) => {
-    // Fallback logic: Check current lang -> Check English -> Return key
     return translations[lang][key] || translations['en'][key] || key;
   };
 
