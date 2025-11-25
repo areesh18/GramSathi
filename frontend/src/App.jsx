@@ -5,10 +5,12 @@ import Home from './pages/Home';
 import Services from './pages/Services';
 import UPISimulation from './pages/Simulation';
 import Admin from './pages/Admin';
+import Profile from './pages/Profile'; 
+import Learn from './pages/Learn';
 
-// Placeholders
+/* // Placeholders
 const Learn = () => <div className="p-8 text-center text-gray-500">Course Library Coming Soon</div>;
-const Profile = () => <div className="p-8 text-center text-gray-500">User Profile Settings</div>;
+const Profile = () => <div className="p-8 text-center text-gray-500">User Profile Settings</div>; */
 
 // --- DESKTOP SIDEBAR ---
 const Sidebar = () => {
