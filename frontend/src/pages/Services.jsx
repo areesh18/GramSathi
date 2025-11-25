@@ -5,11 +5,13 @@ import {
   Stethoscope,
   Sprout,
   ChevronRight,
+  BookOpen, // Added icon
+  Info      // Added icon
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-// Keep categories array as is...
+
 const categories = [
-  { id: "all", label: "All", icon: null },
+  { id: "all", label: "All Lessons", icon: null },
   { id: "gov", label: "Gov Schemes", icon: <Landmark size={16} /> },
   { id: "finance", label: "Finance", icon: <Landmark size={16} /> },
   { id: "health", label: "Health", icon: <Stethoscope size={16} /> },
@@ -21,7 +23,7 @@ const Services = () => {
   const [activeTab, setActiveTab] = useState("all");
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState(""); // 1. Add State for Search
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -39,7 +41,6 @@ const Services = () => {
       });
   }, []);
 
-  // 2. Update Filter Logic to check BOTH Category and Search Term
   const filteredServices = services.filter((service) => {
     const matchesTab = activeTab === "all" || service.category === activeTab;
     const matchesSearch =
@@ -50,27 +51,44 @@ const Services = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-24 md:pb-8">
-      <div className="bg-blue-700 p-8 md:p-12 rounded-b-[2rem] md:rounded-none text-white shadow-lg">
+      {/* Revised Header for Educational Context */}
+      <div className="bg-gradient-to-r from-indigo-700 to-purple-800 p-8 md:p-12 rounded-b-[2rem] md:rounded-none text-white shadow-lg">
         <div className="max-w-5xl mx-auto">
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">Services 🇮🇳</h1>
-          <p className="text-blue-100 text-base md:text-lg">
-            Access 50+ Government Services in one place
+          <div className="flex items-center gap-3 mb-2 opacity-90">
+             <BookOpen size={20} className="text-yellow-300"/>
+             <span className="font-bold text-yellow-300 uppercase tracking-wider text-sm">Practice Mode</span>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">Service Simulator 🇮🇳</h1>
+          <p className="text-indigo-100 text-base md:text-lg">
+            Learn how to use 50+ Government Services without any risk.
           </p>
 
           <div className="mt-6 bg-white/10 backdrop-blur-md p-2 rounded-xl flex items-center border border-white/20 max-w-2xl">
             <Search className="text-white ml-3 opacity-70" size={20} />
             <input
               type="text"
-              value={searchTerm} // 3. Bind Value
-              onChange={(e) => setSearchTerm(e.target.value)} // 4. Bind Event
-              placeholder="Search services (e.g., 'Pension')..."
-              className="bg-transparent border-none outline-none text-white placeholder-blue-200 ml-3 w-full p-1"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search lessons (e.g., 'How to apply for Pension')..."
+              className="bg-transparentKv border-none outline-none text-white placeholder-indigo-200 ml-3 w-full p-1"
             />
           </div>
         </div>
       </div>
 
       <div className="max-w-5xl mx-auto px-4 md:px-6 mt-8">
+        {/* Educational Disclaimer Banner */}
+        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 rounded-r-lg flex gap-3 items-start shadow-sm">
+            <Info className="text-yellow-600 shrink-0 mt-0.5" size={20} />
+            <div>
+                <h4 className="font-bold text-gray-800 text-sm">This is a Training Sandbox</h4>
+                <p className="text-sm text-gray-600">
+                    Actions taken here are <b>simulations</b>. No real money is deducted, and no official forms are submitted. 
+                    Use this to practice safely.
+                </p>
+            </div>
+        </div>
+
         {/* Tabs */}
         <div className="flex gap-3 overflow-x-auto pb-4 no-scrollbar mb-4">
           {categories.map((cat) => (
@@ -79,7 +97,7 @@ const Services = () => {
               onClick={() => setActiveTab(cat.id)}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
                 activeTab === cat.id
-                  ? "bg-blue-700 text-white shadow-md transform scale-105"
+                  ? "bg-indigo-700 text-white shadow-md transform scale-105"
                   : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
               }`}
             >
@@ -92,7 +110,7 @@ const Services = () => {
         {/* Results */}
         {loading ? (
           <div className="text-center py-20 text-gray-500">
-            Loading Government Schemes...
+            Loading Practice Modules...
           </div>
         ) : filteredServices.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -100,12 +118,21 @@ const Services = () => {
               <div
                 key={service.id}
                 onClick={() => {
-                  // If the service is PM Kisan, go to simulation
+                  // Routing Logic: Prioritize Simulations
                   if (service.title.includes("PM Kisan")) {
                     navigate("/simulation/form");
+                  } else if (service.title.includes("UPI")) {
+                    navigate("/simulation/upi");
+                  } else if (service.title.includes("Mandi")) {
+                    navigate("/services/mandi");
+                  } else if (service.title.includes("Tele-Medicine")) {
+                    navigate("/services/doctors");
+                  } else {
+                     // Fallback for demo purposes
+                     alert("This learning module is coming soon!");
                   }
                 }}
-                className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-lg hover:border-blue-200 transition-all duration-200 cursor-pointer group"
+                className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center justify-between hover:shadow-lg hover:border-indigo-200 transition-all duration-200 cursor-pointer group"
               >
                 <div className="flex items-center gap-4">
                   <div
@@ -120,15 +147,19 @@ const Services = () => {
                     <p className="text-xs text-gray-500 mt-0.5">
                       {service.desc}
                     </p>
-                    {/* Add a visual cue for the simulation */}
-                    {service.title.includes("PM Kisan") && (
-                      <span className="inline-block mt-2 px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-md">
-                        ▶ Try Practice Mode
+                    
+                    {/* Visual Cue that this is a lesson */}
+                    <div className="flex gap-2 mt-2">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 text-[10px] font-bold rounded-md uppercase tracking-wide">
+                            <BookOpen size={10} /> Tutorial
+                        </span>
+                        <span className="inline-block px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-md">
+                        +50 Pts
                       </span>
-                    )}
+                    </div>
                   </div>
                 </div>
-                <div className="bg-gray-50 p-2 rounded-full text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                <div className="bg-gray-50 p-2 rounded-full text-gray-400 group-hover:bg-indigo-50 group-hover:text-indigo-600 transition-colors">
                   <ChevronRight size={20} />
                 </div>
               </div>
@@ -136,7 +167,7 @@ const Services = () => {
           </div>
         ) : (
           <div className="text-center py-10 text-gray-400">
-            No services found matching "{searchTerm}"
+            No lessons found matching "{searchTerm}"
           </div>
         )}
       </div>

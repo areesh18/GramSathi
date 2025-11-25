@@ -77,7 +77,7 @@ const Sidebar = () => {
 
       <nav className="space-y-2 flex-1">
         <NavItem to="/" icon={HomeIcon} label="Dashboard" />
-        <NavItem to="/services" icon={Grid} label="Services" />
+        <NavItem to="/services" icon={Grid} label="Practice" />
         <NavItem to="/learn" icon={BookOpen} label="Learn" />
         <NavItem to="/admin" icon={User} label="Admin View" />
         <NavItem to="/profile" icon={User} label="Profile" />
@@ -120,7 +120,7 @@ const BottomNav = () => {
     <div className="md:hidden fixed bottom-0 left-0 w-full bg-white border-t border-gray-100 h-16 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-50 flex justify-around items-center px-2">
       <NavItem to="/" icon={HomeIcon} label="Home" />
       <NavItem to="/learn" icon={BookOpen} label="Learn" />
-      <NavItem to="/services" icon={Grid} label="Services" />
+      <NavItem to="/services" icon={Grid} label="Practice" />
       <NavItem to="/profile" icon={User} label="Profile" />
     </div>
   );
