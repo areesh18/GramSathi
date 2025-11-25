@@ -17,7 +17,12 @@ const Admin = () => {
 
   useEffect(() => {
     const fetchStats = () => {
-      fetch('http://localhost:8080/api/admin/stats')
+        const token = localStorage.getItem('token');
+      fetch('http://localhost:8080/api/admin/stats',{
+        headers: {
+          'Authorization': `Bearer ${token}` // <--- THE KEY CHANGE
+        }
+      })
         .then((res) => res.json())
         .then((data) => setStats(data))
         .catch((err) => console.error('Admin fetch error:', err));

@@ -9,15 +9,21 @@ const UPISimulation = () => {
   const [pin, setPin] = useState("");
 
   const handleComplete = async () => {
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    const token = localStorage.getItem('token');
+
     try {
-      const response = await fetch("http://localhost:8080/api/progress", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const response = await fetch('http://localhost:8080/api/progress', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}` // <--- THE KEY CHANGE
+        },
         body: JSON.stringify({
-          user_id: 1, // Hardcoded ID for demo
-          module_id: "upi",
-          points: 50, // 50 points reward
-        }),
+          user_id: storedUser.id, // Use real ID
+          module_id: 'upi',
+          points: 50
+        })
       });
 
       if (response.ok) {

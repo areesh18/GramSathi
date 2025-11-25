@@ -6,13 +6,20 @@ const Home = () => {
   const [user, setUser] = useState({ name: "Loading...", score: 0 });
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/user')
+    // Get stored user details
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    const token = localStorage.getItem('token');
+
+    if (storedUser && token) {
+      fetch(`http://localhost:8080/api/user/${storedUser.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}` // <--- THE KEY CHANGE
+        }
+      })
       .then(res => res.json())
       .then(data => setUser({ name: data.name, score: data.total_score }))
-      .catch(err => {
-        console.error("Failed to fetch user", err);
-        setUser({ name: "Rajesh", score: 0 }); // Fallback
-      });
+      .catch(err => console.error("Failed to fetch user", err));
+    }
   }, []);
 
   return (

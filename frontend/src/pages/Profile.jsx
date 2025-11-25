@@ -5,10 +5,19 @@ const Profile = () => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    fetch('http://localhost:8080/api/user')
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    const token = localStorage.getItem('token');
+
+    if (storedUser && token) {
+      fetch(`http://localhost:8080/api/user/${storedUser.id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}` // <--- THE KEY CHANGE
+        }
+      })
       .then(res => res.json())
       .then(data => setUser(data))
       .catch(err => console.error("Profile fetch error", err));
+    }
   }, []);
 
   if (!user) return <div className="p-8 text-center">Loading Profile...</div>;

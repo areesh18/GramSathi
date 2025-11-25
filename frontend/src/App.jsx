@@ -1,19 +1,34 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
-import { Home as HomeIcon, BookOpen, Grid, User, LogOut } from 'lucide-react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate, Navigate } from 'react-router-dom';import { Home as HomeIcon, BookOpen, Grid, User, LogOut } from 'lucide-react';
 import Home from './pages/Home';
 import Services from './pages/Services';
 import UPISimulation from './pages/Simulation';
 import Admin from './pages/Admin';
 import Profile from './pages/Profile'; 
 import Learn from './pages/Learn';
+import Login from './pages/Login';
 
 /* // Placeholders
 const Learn = () => <div className="p-8 text-center text-gray-500">Course Library Coming Soon</div>;
 const Profile = () => <div className="p-8 text-center text-gray-500">User Profile Settings</div>; */
 
+// --- Protected Route Wrapper ---
+const ProtectedRoute = ({ children, roleRequired }) => {
+  const token = localStorage.getItem('token');
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+  if (!token) return <Navigate to="/login" />;
+  if (roleRequired && user.role !== roleRequired) return <Navigate to="/" />;
+  
+  return children;
+};
 // --- DESKTOP SIDEBAR ---
 const Sidebar = () => {
+  const navigate = useNavigate();
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate('/login');
+  };
   const location = useLocation();
   const isActive = (path) => location.pathname === path;
   
@@ -82,23 +97,33 @@ const BottomNav = () => {
 function App() {
   return (
     <Router>
-      <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
-        <Sidebar />
-        
-        {/* Main Content Area - Shifts right on Desktop */}
-        <div className="md:ml-64 min-h-screen transition-all duration-300">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/learn" element={<Learn />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/simulation/upi" element={<UPISimulation />} />
-            <Route path="/admin" element={<Admin />} />
-          </Routes>
-        </div>
+      <Routes>
+        {/* Public Route */}
+        <Route path="/login" element={<Login />} />
 
-        <BottomNav />
-      </div>
+        {/* Protected App Layout */}
+        <Route path="/*" element={
+          <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
+             {/* Only show nav bars if logged in (checked inside components ideally, or conditionally render here) */}
+             { localStorage.getItem('token') && <Sidebar /> }
+             
+             <div className={localStorage.getItem('token') ? "md:ml-64 min-h-screen transition-all duration-300" : ""}>
+                <Routes>
+                  <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+                  <Route path="/learn" element={<ProtectedRoute><Learn /></ProtectedRoute>} />
+                  <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
+                  <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                  <Route path="/simulation/upi" element={<ProtectedRoute><UPISimulation /></ProtectedRoute>} />
+                  
+                  {/* ADMIN ONLY ROUTE */}
+                  <Route path="/admin" element={<ProtectedRoute roleRequired="admin"><Admin /></ProtectedRoute>} />
+                </Routes>
+             </div>
+             
+             { localStorage.getItem('token') && <BottomNav /> }
+          </div>
+        } />
+      </Routes>
     </Router>
   );
 }
