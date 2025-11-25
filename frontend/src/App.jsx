@@ -17,7 +17,7 @@ import Profile from "./pages/Profile";
 import Learn from "./pages/Learn";
 import Login from "./pages/Login";
 import Landing from "./pages/Landing";
-import GoogleTranslate from './components/GoogleTranslate';
+
 
 /* // Placeholders
 const Learn = () => <div className="p-8 text-center text-gray-500">Course Library Coming Soon</div>;
@@ -78,11 +78,7 @@ const Sidebar = () => {
       </nav>
 
       <div className="mt-auto pt-4 border-t border-gray-100">
-        <p className="text-xs font-bold text-gray-400 uppercase px-4 mb-2">Language</p>
-         
-         <div className="px-4 mb-4">
-           <GoogleTranslate />  {/* <--- DROPS IN THE WIDGET */}
-         </div>
+        
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 px-4 py-2 text-red-500 hover:bg-red-50 rounded-xl w-full transition cursor-pointer"

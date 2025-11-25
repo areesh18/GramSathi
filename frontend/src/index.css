@@ -1,27 +1,31 @@
 @import "tailwindcss";
 
-/* Hide the Google Translate Top Bar */
-.goog-te-banner-frame.skiptranslate {
-    display: none !important;
-} 
-body {
-    top: 0px !important; 
-}
+/* --- GTRANSLATE: NO FLAGS MODE --- */
 
-/* Style the Dropdown slightly */
-#google_translate_element select {
-    background: transparent;
-    color: #374151;
-    border: none;
-    outline: none;
-    font-family: inherit;
-    font-weight: 600;
-}
-
-/* Hide the "Powered by Google" branding if desired (Optional) */
-.goog-logo-link {
+/* 1. Hide ALL flags (Main button + Dropdown list) */
+/* .gt_float_switcher img {
     display: none !important;
 }
-.goog-te-gadget {
-    color: transparent !important;
+ */
+/* 2. Adjust the Main Button since the flag is gone */
+.gt_float_switcher .gt_selected {
+    padding-left: 0 !important; /* Remove space left for flag */
+    text-align: center !important;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+/* 3. Adjust the List Items since flags are gone */
+.gt_float_switcher .gt_options a {
+    padding-left: 0 !important;
+    text-align: center !important;
+}
+
+/* 4. Make the button look like a text pill */
+.gt_float_switcher {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
 }
