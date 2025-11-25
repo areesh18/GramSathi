@@ -7,11 +7,53 @@ import {
   Share2,
   LogOut,
   RefreshCw,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+// Mapping module IDs to Certificate Data
+const CERT_TYPES = {
+  upi_payment: {
+    title: "Digital Financial Literacy",
+    subtitle: "Unified Payments Interface (UPI)",
+    desc: "Has successfully demonstrated proficiency in safe digital payments.",
+    color: "text-blue-800",
+    border: "border-blue-600",
+  },
+  sim_pm_kisan: {
+    title: "E-Governance Services",
+    subtitle: "PM Kisan Samman Nidhi",
+    desc: "Has successfully learned to navigate and apply for government schemes.",
+    color: "text-green-800",
+    border: "border-green-600",
+  },
+  quiz_literacy_101: {
+    title: "Cyber Safety Awareness",
+    subtitle: "Internet Safety Basics",
+    desc: "Has passed the fundamental assessment on digital security and fraud prevention.",
+    color: "text-purple-800",
+    border: "border-purple-600",
+  },
+  sim_digilocker: {
+    title: "Digital Documentation",
+    subtitle: "DigiLocker Management",
+    desc: "Is proficient in accessing and managing official digital documents.",
+    color: "text-indigo-800",
+    border: "border-indigo-600",
+  },
+  grievance_filed: {
+    title: "Active Citizenship",
+    subtitle: "Public Grievance Redressal",
+    desc: "Has taken initiative to report village issues using digital tools.",
+    color: "text-rose-800",
+    border: "border-rose-600",
+  },
+};
+
 const Profile = ({ onReplayTutorial }) => {
   const [user, setUser] = useState(null);
+  const [currentCertIndex, setCurrentCertIndex] = useState(0);
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -19,11 +61,8 @@ const Profile = ({ onReplayTutorial }) => {
     navigate("/login");
   };
 
-  // Download certificate as image
   const handleDownloadCertificate = () => {
     const certificate = document.getElementById("certificate-container");
-
-    // Use html2canvas if available, otherwise provide alternative
     if (window.html2canvas) {
       window
         .html2canvas(certificate, {
@@ -33,7 +72,7 @@ const Profile = ({ onReplayTutorial }) => {
         })
         .then((canvas) => {
           const link = document.createElement("a");
-          link.download = `GramSathi_Certificate_${user.name.replace(
+          link.download = `GramSathi_Cert_${user.name.replace(
             /\s+/g,
             "_"
           )}.png`;
@@ -41,93 +80,22 @@ const Profile = ({ onReplayTutorial }) => {
           link.click();
         });
     } else {
-      // Fallback: Create a printable version
-      const printWindow = window.open("", "_blank");
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>Certificate - ${user.name}</title>
-            <style>
-              body { 
-                font-family: serif; 
-                padding: 40px;
-                margin: 0;
-              }
-              .cert {
-                border: 8px double #d97706;
-                padding: 60px;
-                text-align: center;
-                max-width: 800px;
-                margin: 0 auto;
-                position: relative;
-              }
-              .badge {
-                position: absolute;
-                top: 20px;
-                left: 20px;
-                width: 60px;
-                height: 60px;
-                background: #eab308;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-size: 24px;
-              }
-              h1 { font-size: 36px; margin: 20px 0; }
-              .name { font-size: 48px; color: #1e40af; margin: 30px 0; }
-              @media print {
-                body { padding: 0; }
-              }
-            </style>
-          </head>
-          <body>
-            <div class="cert">
-              <div class="badge">🏆</div>
-              <h1>Certificate of Completion</h1>
-              <p style="font-style: italic; color: #666;">This is to certify that</p>
-              <div class="name">${user.name}</div>
-              <p style="color: #666; margin: 30px auto; max-width: 500px;">
-                Has successfully demonstrated proficiency in <b>Digital Financial Literacy (UPI)</b> 
-                on GramSathi Platform.
-              </p>
-              <div style="margin-top: 60px; display: flex; justify-content: space-around; max-width: 400px; margin-left: auto; margin-right: auto;">
-                <div style="border-top: 2px solid #ccc; padding-top: 10px; width: 150px;">
-                  <small>Date</small>
-                </div>
-                <div style="border-top: 2px solid #ccc; padding-top: 10px; width: 150px;">
-                  <small>Signature</small>
-                </div>
-              </div>
-            </div>
-            <script>
-              window.onload = () => {
-                window.print();
-                setTimeout(() => window.close(), 500);
-              }
-            </script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
+      window.print();
     }
   };
 
-  // Share certificate (Web Share API)
   const handleShareCertificate = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
           title: "GramSathi Certificate",
-          text: `I've completed Digital Literacy training on GramSathi! Score: ${user.total_score}`,
+          text: `I've completed Digital Literacy training on GramSathi! Total Points: ${user.total_score}`,
           url: window.location.href,
         });
       } catch (err) {
-        console.log("Share cancelled or failed");
+        console.log("Share cancelled");
       }
     } else {
-      // Fallback: Copy link to clipboard
       navigator.clipboard.writeText(window.location.href);
       alert("✅ Profile link copied to clipboard!");
     }
@@ -151,6 +119,23 @@ const Profile = ({ onReplayTutorial }) => {
 
   if (!user) return <div className="p-8 text-center">Loading Profile...</div>;
 
+  // Filter user badges to only those we have certificates for
+  const userCertificates = (user.badges || [])
+    .filter((badgeId) => CERT_TYPES[badgeId])
+    .map((badgeId) => ({ id: badgeId, ...CERT_TYPES[badgeId] }));
+
+  const currentCert = userCertificates[currentCertIndex];
+
+  const nextCert = () => {
+    setCurrentCertIndex((prev) => (prev + 1) % userCertificates.length);
+  };
+
+  const prevCert = () => {
+    setCurrentCertIndex((prev) =>
+      prev === 0 ? userCertificates.length - 1 : prev - 1
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-12 font-sans pb-24">
       <h1 className="text-3xl font-bold text-gray-800 mb-8">My Identity 🇮🇳</h1>
@@ -170,7 +155,7 @@ const Profile = ({ onReplayTutorial }) => {
               </div>
               <div className="flex items-center gap-2 text-gray-500 mt-1">
                 <User size={16} />
-                <span>ID: #98220192</span>
+                <span>ID: #98220{user.id}</span>
               </div>
             </div>
           </div>
@@ -178,11 +163,11 @@ const Profile = ({ onReplayTutorial }) => {
           <div className="bg-gradient-to-r from-blue-800 to-blue-600 p-8 rounded-3xl text-white shadow-xl relative overflow-hidden">
             <div className="relative z-10">
               <p className="text-blue-200 font-medium mb-1">
-                Digital Literacy Score
+                Digital Literacy Points
               </p>
               <h3 className="text-5xl font-bold">
                 {user.total_score}{" "}
-                <span className="text-2xl opacity-70"></span>
+                <span className="text-2xl opacity-70">Pts</span>
               </h3>
               <p className="mt-4 text-sm opacity-90">
                 {user.total_score > 0
@@ -194,46 +179,81 @@ const Profile = ({ onReplayTutorial }) => {
           </div>
         </div>
 
-        {/* Right: The Certificate (Only shows if score > 0) */}
+        {/* Right: The Certificate Carousel */}
         <div className="flex flex-col">
-          <h3 className="font-bold text-gray-700 mb-4 flex items-center gap-2">
-            <Award className="text-orange-500" /> Achievements
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold text-gray-700 flex items-center gap-2">
+              <Award className="text-orange-500" /> Achievements
+            </h3>
+            {userCertificates.length > 1 && (
+              <span className="text-xs text-gray-500 font-medium">
+                {currentCertIndex + 1} / {userCertificates.length}
+              </span>
+            )}
+          </div>
 
-          {user.total_score > 0 ? (
-            <div
-              id="certificate-container"
-              className="bg-white border-8 border-double border-yellow-600 p-8 rounded-lg shadow-2xl text-center relative flex-1 flex flex-col justify-center"
-            >
-              <div className="absolute top-4 left-4 w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg">
-                <Award className="text-white" size={32} />
-              </div>
+          {userCertificates.length > 0 ? (
+            <div className="relative">
+              {/* Navigation Buttons */}
+              {userCertificates.length > 1 && (
+                <>
+                  <button
+                    onClick={prevCert}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-3 bg-white shadow-lg rounded-full p-2 text-gray-600 hover:text-blue-600 z-10 border border-gray-100"
+                  >
+                    <ChevronLeft size={24} />
+                  </button>
+                  <button
+                    onClick={nextCert}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-3 bg-white shadow-lg rounded-full p-2 text-gray-600 hover:text-blue-600 z-10 border border-gray-100"
+                  >
+                    <ChevronRight size={24} />
+                  </button>
+                </>
+              )}
 
-              <h2 className="font-serif text-3xl font-bold text-gray-800 mb-2">
-                Certificate of Completion
-              </h2>
-              <p className="text-gray-500 italic mb-6">
-                This is to certify that
-              </p>
-              <h1 className="text-4xl font-bold text-blue-800 mb-6 font-serif">
-                {user.name}
-              </h1>
-              <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                Has successfully demonstrated proficiency in{" "}
-                <b>Digital Financial Literacy (UPI)</b> on GramSathi Platform.
-              </p>
+              <div
+                id="certificate-container"
+                className={`bg-white border-8 border-double ${
+                  currentCert.border.replace("text", "border") ||
+                  "border-yellow-600"
+                } p-8 rounded-lg shadow-2xl text-center relative flex-1 flex flex-col justify-center min-h-[400px] animate-in fade-in duration-300`}
+              >
+                <div className="absolute top-4 left-4 w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center shadow-lg">
+                  <Award className="text-white" size={32} />
+                </div>
 
-              <div className="flex justify-center gap-12 text-sm font-bold text-gray-400">
-                <div className="border-t border-gray-300 pt-2 w-32">Date</div>
-                <div className="border-t border-gray-300 pt-2 w-32">
-                  Signature
+                <h2 className="font-serif text-2xl font-bold text-gray-800 mb-2">
+                  Certificate of Completion
+                </h2>
+                <p className="text-gray-500 italic mb-6">
+                  This is to certify that
+                </p>
+                <h1 className="text-3xl font-bold text-blue-800 mb-4 font-serif">
+                  {user.name}
+                </h1>
+                <p className="text-gray-600 mb-2 text-sm uppercase tracking-widest">
+                  Has successfully demonstrated proficiency in
+                </p>
+                <h3 className={`text-xl font-bold ${currentCert.color} mb-1`}>
+                  {currentCert.title}
+                </h3>
+                <p className="text-gray-500 text-sm mb-6">
+                  {currentCert.subtitle}
+                </p>
+
+                <div className="flex justify-center gap-12 text-sm font-bold text-gray-400 mt-auto">
+                  <div className="border-t border-gray-300 pt-2 w-24">Date</div>
+                  <div className="border-t border-gray-300 pt-2 w-24">
+                    Signature
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-8 flex gap-4 justify-center">
+              <div className="mt-6 flex gap-4 justify-center">
                 <button
                   onClick={handleDownloadCertificate}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 transition active:scale-95"
+                  className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-full font-bold hover:bg-blue-700 transition active:scale-95 shadow-md"
                 >
                   <Download size={18} /> Download
                 </button>
@@ -246,15 +266,21 @@ const Profile = ({ onReplayTutorial }) => {
               </div>
             </div>
           ) : (
-            <div className="bg-gray-100 rounded-3xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center h-64 text-gray-400">
+            <div className="bg-gray-100 rounded-3xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center h-64 text-gray-400 p-6 text-center">
               <Award size={48} className="mb-4 opacity-50" />
-              <p>Complete a lesson to unlock your certificate</p>
+              <p>Complete a lesson to unlock your first certificate!</p>
+              <button
+                onClick={() => navigate("/services")}
+                className="mt-4 text-blue-600 font-bold text-sm hover:underline"
+              >
+                Go to Practice Mode
+              </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* SETTINGS & LOGOUT (Visible mainly on Mobile) */}
+      {/* SETTINGS & LOGOUT (Mobile) */}
       <div className="mt-10 pt-6 border-t border-gray-200 space-y-4 md:hidden">
         {onReplayTutorial && (
           <button

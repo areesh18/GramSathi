@@ -13,6 +13,7 @@ type User struct {
 	Village    string    `json:"village"`
 	TotalScore int       `json:"total_score"`
 	CreatedAt  time.Time `json:"created_at"`
+	Badges     []string  `json:"badges" gorm:"-"` 
 }
 
 type Progress struct {

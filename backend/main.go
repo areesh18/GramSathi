@@ -98,12 +98,36 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// 3. GET PROFILE
+// 3. GET PROFILE (UPDATED)
 func GetProfile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 	var user User
-	DB.First(&user, id)
+	if result := DB.First(&user, id); result.Error != nil {
+		http.Error(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	// Fetch completed modules to populate Badges
+	var progress []Progress
+	DB.Where("user_id = ?", user.ID).Find(&progress)
+
+	// Use a map to ensure unique badges
+	badgeMap := make(map[string]bool)
+	for _, p := range progress {
+		// Only count as badge if points > 0 (avoids failed attempts if you track those)
+		ifQP := p.Points > 0
+		if ifQP {
+			badgeMap[p.ModuleID] = true
+		}
+	}
+
+	// Convert map to slice
+	user.Badges = make([]string, 0, len(badgeMap))
+	for module := range badgeMap {
+		user.Badges = append(user.Badges, module)
+	}
+
 	json.NewEncoder(w).Encode(user)
 }
 
