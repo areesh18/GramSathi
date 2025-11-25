@@ -167,6 +167,13 @@ const Home = () => {
                 isTextIcon: true,
                 link: "#",
               },
+              {
+                title: "Land Records",
+                icon: "📜",
+                color: "bg-teal-100 text-teal-700",
+                isTextIcon: true,
+                link: "/services/land-records",
+              },
             ].map((item, idx) => (
               <Link
                 to={item.link}
