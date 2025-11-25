@@ -33,10 +33,12 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // CRITICAL FIX: Fallback to index.html for all SPA routes
+        navigateFallback: "/index.html",
+        navigateFallbackDenylist: [/^\/api\//], // Exclude API routes from fallback
         runtimeCaching: [
           {
-            // 1. Cache Google Fonts and External Images (YouTube Thumbnails)
-            // Uses CacheFirst to ensure media loads even when completely offline.
+            // 1. Cache Google Fonts and External Images
             urlPattern:
               /^https:\/\/(fonts\.googleapis\.com|img\.youtube\.com|i\.ytimg\.com)\/.*/i,
             handler: "CacheFirst",
@@ -50,7 +52,6 @@ export default defineConfig({
           },
           {
             // 2. Cache API GET Requests (Schemes, User Profile, Stats)
-            // Strategy: NetworkFirst means "Try to get fresh data. If offline, use cache."
             urlPattern: ({ url }) =>
               url.origin === "http://localhost:8080" &&
               url.pathname.startsWith("/api/") &&
