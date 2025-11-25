@@ -14,7 +14,6 @@ const Login = () => {
     e.preventDefault();
     const endpoint = isRegister ? 'register' : 'login';
     
-    // Only send what is needed. Backend forces Role="user" on register.
     const payload = isRegister 
       ? { name, email, password, village } 
       : { email, password };
@@ -35,11 +34,11 @@ const Login = () => {
           localStorage.setItem('token', data.token);
           localStorage.setItem('user', JSON.stringify(data.user));
           
-          // ROUTING LOGIC BASED ON ROLE
+          // --- FIXED ROUTING LOGIC ---
           if (data.user.role === 'admin') {
             navigate('/admin');
           } else {
-            navigate('/');
+            navigate('/dashboard'); // <--- CHANGED FROM '/' TO '/dashboard'
           }
         }
       } else {
@@ -100,11 +99,10 @@ const Login = () => {
           </div>
         </div>
         
-        {/* DEMO CREDENTIALS HINT */}
         <div className="bg-gray-50 p-4 text-xs text-gray-500 text-center border-t border-gray-100">
           <p className="font-bold">Hackathon Demo Access:</p>
           <p>👮‍♂️ Admin: admin@gramsathi.in / admin123</p>
-          <p>🧑‍🌾 Citizen: rajesh@village.in / 123456</p>
+          <p>🧑‍🌾 Citizen: Any Registered User</p>
         </div>
       </div>
     </div>

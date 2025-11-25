@@ -16,6 +16,7 @@ import Admin from "./pages/Admin";
 import Profile from "./pages/Profile";
 import Learn from "./pages/Learn";
 import Login from "./pages/Login";
+import Landing from "./pages/Landing";
 
 /* // Placeholders
 const Learn = () => <div className="p-8 text-center text-gray-500">Course Library Coming Soon</div>;
@@ -121,84 +122,87 @@ const BottomNav = () => {
 function App() {
   return (
     <Router>
-      <Routes>
-        {/* Public Route */}
-        <Route path="/login" element={<Login />} />
+      <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
+        {/* Only show Sidebar if logged in */}
+        {localStorage.getItem("token") && <Sidebar />}
 
-        {/* Protected App Layout */}
-        <Route
-          path="/*"
-          element={
-            <div className="min-h-screen bg-gray-50 font-sans text-gray-900">
-              {/* Only show nav bars if logged in (checked inside components ideally, or conditionally render here) */}
-              {localStorage.getItem("token") && <Sidebar />}
-
-              <div
-                className={
-                  localStorage.getItem("token")
-                    ? "md:ml-64 min-h-screen transition-all duration-300"
-                    : ""
-                }
-              >
-                <Routes>
-                  <Route
-                    path="/"
-                    element={
-                      <ProtectedRoute>
-                        <Home />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/learn"
-                    element={
-                      <ProtectedRoute>
-                        <Learn />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/services"
-                    element={
-                      <ProtectedRoute>
-                        <Services />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/profile"
-                    element={
-                      <ProtectedRoute>
-                        <Profile />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/simulation/upi"
-                    element={
-                      <ProtectedRoute>
-                        <UPISimulation />
-                      </ProtectedRoute>
-                    }
-                  />
-
-                  {/* ADMIN ONLY ROUTE */}
-                  <Route
-                    path="/admin"
-                    element={
-                      <ProtectedRoute roleRequired="admin">
-                        <Admin />
-                      </ProtectedRoute>
-                    }
-                  />
-                </Routes>
-              </div>
-
-              {localStorage.getItem("token") && <BottomNav />}
-            </div>
+        <div
+          className={
+            localStorage.getItem("token")
+              ? "md:ml-64 min-h-screen transition-all duration-300"
+              : ""
           }
-        />
-      </Routes>
+        >
+          <Routes>
+            {/* Public Route: Landing Page is now the Default Home */}
+            <Route
+              path="/"
+              element={
+                // If logged in -> Go to Dashboard, else -> Show Landing
+                localStorage.getItem("token") ? (
+                  <Navigate to="/dashboard" />
+                ) : (
+                  <Landing />
+                )
+              }
+            />
+            <Route path="/login" element={<Login />} />
+            {/* Protected Routes */}
+            <Route
+              path="/dashboard"
+              element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              }
+            />{" "}
+            {/* Renamed Home to Dashboard */}
+            <Route
+              path="/learn"
+              element={
+                <ProtectedRoute>
+                  <Learn />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/services"
+              element={
+                <ProtectedRoute>
+                  <Services />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/simulation/upi"
+              element={
+                <ProtectedRoute>
+                  <UPISimulation />
+                </ProtectedRoute>
+              }
+            />
+            {/* Admin Route */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute roleRequired="admin">
+                  <Admin />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </div>
+
+        {localStorage.getItem("token") && <BottomNav />}
+      </div>
     </Router>
   );
 }
