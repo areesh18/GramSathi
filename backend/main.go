@@ -165,7 +165,7 @@ func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 	DB.Model(&User{}).Where("role = ?", "user").Count(&totalUsers)
 	DB.Model(&User{}).Where("role = ?", "user").Select("COALESCE(AVG(total_score), 0)").Scan(&avgScore)
 
-	// B. Adoption Trend (Users per Month)
+	// B. Adoption Trend
 	type MonthlyStat struct {
 		Month string `json:"name"`
 		Users int    `json:"users"`
@@ -193,31 +193,52 @@ func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 		Limit(5).
 		Scan(&villageStats)
 
-	// D. Module Popularity
+	// D. Module Popularity (CONSOLIDATED FIX)
 	type ModuleStat struct {
 		Name  string `json:"name"`
 		Value int    `json:"value"`
 	}
-	var moduleStats []ModuleStat
+	var rawStats []ModuleStat
+
+	// 1. Fetch raw data grouped by ID
 	DB.Model(&Progress{}).
 		Select("module_id as name, COUNT(id) as value").
 		Group("module_id").
-		Scan(&moduleStats)
+		Scan(&rawStats)
 
-	for i := range moduleStats {
-		switch moduleStats[i].Name {
-		case "upi":
-			moduleStats[i].Name = "UPI Payments"
+	// 2. Create a map to aggregate duplicates
+	consolidatedMap := make(map[string]int)
+
+	for _, stat := range rawStats {
+		label := stat.Name
+		// Map technical IDs to readable labels
+		switch stat.Name {
+		case "upi", "upi_payment", "upi_balance_check": // Merge all UPI variants
+			label = "UPI Payments"
 		case "quiz_literacy_101":
-			moduleStats[i].Name = "Safety Quiz"
+			label = "Safety Quiz"
 		case "sim_pm_kisan":
-			moduleStats[i].Name = "PM Kisan Form"
+			label = "PM Kisan Form"
 		case "grievance_filed":
-			moduleStats[i].Name = "Grievance"
+			label = "Grievance"
+		case "mandi_pass":
+			label = "Mandi Pass"
+		case "tele_medicine":
+			label = "Tele-Medicine"
+		case "sim_digilocker":
+			label = "DigiLocker"
 		}
+		// Add to the total for this label
+		consolidatedMap[label] += stat.Value
 	}
 
-	// E. NEW: Struggle Analysis (Failures)
+	// 3. Convert map back to slice for JSON
+	var moduleStats []ModuleStat
+	for name, value := range consolidatedMap {
+		moduleStats = append(moduleStats, ModuleStat{Name: name, Value: value})
+	}
+
+	// E. Struggle Analysis
 	type StruggleStat struct {
 		Module   string `json:"module"`
 		Failures int    `json:"failures"`
@@ -239,14 +260,13 @@ func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Return combined data
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"total_users":  totalUsers,
 		"avg_score":    int(avgScore),
 		"trend":        trend,
 		"villages":     villageStats,
-		"module_stats": moduleStats,
-		"struggles":    struggles, // <--- NEW
+		"module_stats": moduleStats, // Now aggregated
+		"struggles":    struggles,
 	})
 }
 
