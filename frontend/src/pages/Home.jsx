@@ -10,10 +10,10 @@ import {
   Briefcase,
   AlertTriangle,
 } from "lucide-react";
-
+import { useLanguage } from '../context/LanguageContext';
 const Home = () => {
   const [user, setUser] = useState({ name: "Loading...", score: 0 });
-
+    const { t } = useLanguage();
   useEffect(() => {
     // Get stored user details
     const storedUser = JSON.parse(localStorage.getItem("user"));
@@ -38,7 +38,7 @@ const Home = () => {
         <div className="max-w-5xl mx-auto">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
-              <p className="text-blue-200 text-sm font-medium mb-1">Namaste,</p>
+              <p className="text-blue-200 text-sm font-medium mb-1">{t('welcome')},</p>
               <h1 className="text-3xl md:text-4xl font-bold">{user.name} 🙏</h1>
             </div>
 
