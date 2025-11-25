@@ -111,6 +111,7 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 func RecordProgress(w http.ResponseWriter, r *http.Request) {
 	var p Progress
 	json.NewDecoder(r.Body).Decode(&p)
+	p.CreatedAt = time.Now()
 	DB.Create(&p)
 
 	var user User
@@ -120,7 +121,19 @@ func RecordProgress(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// 5. ADMIN STATS (UPGRADED)
+// 5. LOG ACTIVITY (NEW)
+func LogActivity(w http.ResponseWriter, r *http.Request) {
+	var log ActivityLog
+	if err := json.NewDecoder(r.Body).Decode(&log); err != nil {
+		http.Error(w, "Invalid input", http.StatusBadRequest)
+		return
+	}
+	log.CreatedAt = time.Now()
+	DB.Create(&log)
+	w.WriteHeader(http.StatusOK)
+}
+
+// 6. ADMIN STATS (UPGRADED)
 func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 	// A. Basic Counters
 	var totalUsers int64
@@ -134,7 +147,6 @@ func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 		Users int    `json:"users"`
 	}
 	var trend []MonthlyStat
-	// Postgres specific date truncation
 	DB.Model(&User{}).
 		Where("role = ?", "user").
 		Select("TO_CHAR(created_at, 'Mon') as month, count(id) as users").
@@ -142,22 +154,22 @@ func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 		Order("MIN(created_at)").
 		Scan(&trend)
 
-	// C. Village Impact (Avg Score & User Count)
+	// C. Village Impact
 	type VillageStat struct {
 		Name  string  `json:"name"`
 		Score float64 `json:"score"`
-		Count int     `json:"count"` // Added count
+		Count int     `json:"count"`
 	}
 	var villageStats []VillageStat
 	DB.Model(&User{}).
 		Where("role = ?", "user").
 		Select("village as name, AVG(total_score) as score, COUNT(id) as count").
 		Group("village").
-		Order("score desc"). // Order by highest score
+		Order("score desc").
 		Limit(5).
 		Scan(&villageStats)
 
-	// D. NEW: Module Popularity (What are they learning?)
+	// D. Module Popularity
 	type ModuleStat struct {
 		Name  string `json:"name"`
 		Value int    `json:"value"`
@@ -168,7 +180,6 @@ func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 		Group("module_id").
 		Scan(&moduleStats)
 
-	// Clean up Module Names for the Chart (Optional cosmetic fix)
 	for i := range moduleStats {
 		switch moduleStats[i].Name {
 		case "upi":
@@ -182,20 +193,42 @@ func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// E. NEW: Struggle Analysis (Failures)
+	type StruggleStat struct {
+		Module   string `json:"module"`
+		Failures int    `json:"failures"`
+	}
+	var struggles []StruggleStat
+	DB.Model(&ActivityLog{}).
+		Where("action LIKE ?", "failed%").
+		Select("module_id as module, COUNT(id) as failures").
+		Group("module_id").
+		Order("failures desc").
+		Scan(&struggles)
+
+	for i := range struggles {
+		switch struggles[i].Module {
+		case "upi":
+			struggles[i].Module = "UPI (PIN Entry)"
+		case "sim_pm_kisan":
+			struggles[i].Module = "Form (Uploads)"
+		}
+	}
+
 	// Return combined data
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"total_users":  totalUsers,
 		"avg_score":    int(avgScore),
 		"trend":        trend,
 		"villages":     villageStats,
-		"module_stats": moduleStats, // <--- New Data Field
+		"module_stats": moduleStats,
+		"struggles":    struggles, // <--- NEW
 	})
 }
 
-// --- NEW HANDLER ---
+// 7. GET SCHEMES
 func GetSchemes(w http.ResponseWriter, r *http.Request) {
 	var schemes []Scheme
-	// Fetch all schemes
 	if result := DB.Find(&schemes); result.Error != nil {
 		http.Error(w, "Server Error", http.StatusInternalServerError)
 		return
@@ -233,11 +266,11 @@ func main() {
 
 	r.HandleFunc("/api/user/{id}", IsAuthorized(GetProfile)).Methods("GET")
 	r.HandleFunc("/api/progress", IsAuthorized(RecordProgress)).Methods("POST")
+	r.HandleFunc("/api/log", IsAuthorized(LogActivity)).Methods("POST") // <--- NEW ROUTE
 	r.HandleFunc("/api/admin/stats", IsAuthorized(GetAdminStats)).Methods("GET")
 	r.HandleFunc("/api/schemes", IsAuthorized(GetSchemes)).Methods("GET")
 
 	c := cors.New(cors.Options{
-		// CHANGE THIS LINE:
 		AllowedOrigins:   []string{"*"},
 		AllowedMethods:   []string{"GET", "POST", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},

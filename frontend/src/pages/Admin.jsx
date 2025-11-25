@@ -24,7 +24,8 @@ const Admin = () => {
     avg_score: 0, 
     trend: [], 
     villages: [],
-    module_stats: [] // New State
+    module_stats: [],
+    struggles: [] // New Data
   });
 
   useEffect(() => {
@@ -42,7 +43,8 @@ const Admin = () => {
           avg_score: data.avg_score || 0,
           trend: data.trend || [],
           villages: data.villages || [],
-          module_stats: data.module_stats || []
+          module_stats: data.module_stats || [],
+          struggles: data.struggles || []
         });
       })
       .catch((err) => console.error('Admin fetch error:', err));
@@ -146,19 +148,44 @@ const Admin = () => {
         </div>
       </div>
 
-      {/* ROW 2: Village Leaderboard */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-        <h3 className="text-lg font-bold text-slate-800 mb-4">Village Performance Leaderboard</h3>
-        <div className="h-64">
-           <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.villages}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} />
-                <YAxis axisLine={false} tickLine={false} />
-                <Tooltip cursor={{ fill: '#f1f5f9' }} />
-                <Bar dataKey="score" name="Avg Score" fill="#8b5cf6" radius={[4, 4, 0, 0]} barSize={50} />
-              </BarChart>
-           </ResponsiveContainer>
+      {/* ROW 2: INSIGHTS (Village & Struggles) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        
+        {/* Village Leaderboard */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+          <h3 className="text-lg font-bold text-slate-800 mb-4">Village Leaderboard</h3>
+          <div className="h-64">
+             <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={stats.villages} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                  <XAxis type="number" hide />
+                  <YAxis dataKey="name" type="category" width={100} tick={{fontSize: 12}}/>
+                  <Tooltip cursor={{ fill: '#f1f5f9' }} />
+                  <Bar dataKey="score" name="Avg Score" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={20} />
+                </BarChart>
+             </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* NEW: Struggle Areas Chart */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-red-100">
+            <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-slate-800">Top Learning Barriers</h3>
+                <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-1 rounded">Action Needed</span>
+            </div>
+            <p className="text-xs text-gray-500 mb-4">Where are villagers failing the most?</p>
+            
+            <div className="h-56">
+                <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={stats.struggles}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis dataKey="module" tick={{fontSize: 12}} />
+                        <YAxis allowDecimals={false} />
+                        <Tooltip cursor={{ fill: '#fee2e2' }} />
+                        <Bar dataKey="failures" name="Failed Attempts" fill="#ef4444" radius={[4, 4, 0, 0]} barSize={40} />
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
         </div>
       </div>
     </div>

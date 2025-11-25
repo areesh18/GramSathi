@@ -21,11 +21,11 @@ func InitDB() {
 		log.Fatal("Failed to connect to database:", err)
 	}
 
-	// AutoMigrate the NEW Scheme struct
-	DB.AutoMigrate(&User{}, &Progress{}, &Scheme{})
+	// AutoMigrate User, Progress, Scheme AND ActivityLog
+	DB.AutoMigrate(&User{}, &Progress{}, &Scheme{}, &ActivityLog{})
 	fmt.Println("🚀 Database connected!")
 
-	// --- SEED ADMIN & USER (Keep existing code) ---
+	// --- SEED ADMIN & USER ---
 	var adminCount int64
 	DB.Model(&User{}).Where("role = ?", "admin").Count(&adminCount)
 	if adminCount == 0 {
@@ -44,7 +44,7 @@ func InitDB() {
 		fmt.Println("👤 Seeded Normal User")
 	}
 
-	// --- NEW: SEED SCHEMES ---
+	// --- SEED SCHEMES ---
 	var schemeCount int64
 	DB.Model(&Scheme{}).Count(&schemeCount)
 	if schemeCount == 0 {

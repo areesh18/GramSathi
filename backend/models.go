@@ -23,7 +23,16 @@ type Progress struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-// --- NEW: Scheme Model ---
+// --- NEW: Activity Log for Analytics ---
+type ActivityLog struct {
+	ID        uint      `gorm:"primaryKey" json:"id"`
+	UserID    uint      `json:"user_id"`
+	ModuleID  string    `json:"module_id"` // e.g., "upi", "pm_kisan"
+	Action    string    `json:"action"`    // e.g., "started", "failed_pin", "completed"
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// --- Scheme Model ---
 type Scheme struct {
 	ID          uint   `gorm:"primaryKey" json:"id"`
 	Title       string `json:"title"`

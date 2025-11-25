@@ -9,10 +9,36 @@ const UPISimulation = () => {
   const [pin, setPin] = useState("");
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
 
+  // --- NEW: Activity Logger ---
+  const logActivity = (action) => {
+    const storedUser = JSON.parse(localStorage.getItem('user'));
+    const token = localStorage.getItem('token');
+    
+    // Don't log if guest or offline (we will add sync later)
+    if (isOffline || !token || token === 'guest-token') return;
+
+    fetch('http://localhost:8080/api/log', {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json', 
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+            user_id: storedUser.id,
+            module_id: 'upi',
+            action: action
+        })
+    }).catch(err => console.log("Log failed", err));
+  };
+
   useEffect(() => {
     const handleStatus = () => setIsOffline(!navigator.onLine);
     window.addEventListener("online", handleStatus);
     window.addEventListener("offline", handleStatus);
+    
+    // Log start
+    logActivity('started');
+
     return () => {
       window.removeEventListener("online", handleStatus);
       window.removeEventListener("offline", handleStatus);
@@ -20,10 +46,10 @@ const UPISimulation = () => {
   }, []);
 
   const handleComplete = async () => {
+    logActivity('completed'); // Log success
     const storedUser = JSON.parse(localStorage.getItem('user'));
     const token = localStorage.getItem('token');
 
-    // OFFLINE HANDLING: Simulate success for Guest/Offline users
     if (isOffline || !token || token === 'guest-token') {
        alert("🎉 Practice Complete! (Offline Mode - Points will sync later)");
        navigate("/");
@@ -48,13 +74,11 @@ const UPISimulation = () => {
         alert("🎉 Success! 50 Points Added to your Profile.");
         navigate("/");
       } else {
-        // Fallback if server error
         alert("Practice Complete! (Server Unreachable)");
         navigate("/");
       }
     } catch (error) {
       console.error("Backend offline?", error);
-      // Fallback for network error
       alert("Practice Complete! (Offline Mode)");
       navigate("/");
     }
@@ -82,7 +106,6 @@ const UPISimulation = () => {
             <div className="w-64 h-64 bg-gray-200 rounded-3xl border-4 border-dashed border-gray-400 flex items-center justify-center mb-8 relative">
               <Smartphone size={48} className="text-gray-400" />
 
-              {/* The "Guide" Button */}
               <button
                 onClick={() => setStep(2)}
                 className="absolute -bottom-6 bg-blue-600 text-white px-8 py-3 rounded-full font-bold shadow-xl active:scale-95 transition-transform flex items-center gap-2"
@@ -125,7 +148,6 @@ const UPISimulation = () => {
                 />
               )}
 
-              {/* Click Hint Overlay */}
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-active:bg-black/20">
                 <span className="bg-white text-black px-6 py-2 rounded-full font-bold shadow-lg scale-110 animate-pulse">
                   Tap QR to Scan
@@ -186,7 +208,7 @@ const UPISimulation = () => {
           </div>
         )}
 
-        {/* --- STEP 4: PIN ENTRY (Fake Keypad) --- */}
+        {/* --- STEP 4: PIN ENTRY (Fake Keypad with Logic) --- */}
         {step === 4 && (
           <div className="fixed inset-0 bg-white z-50 flex flex-col animate-in slide-in-from-bottom duration-300">
             <div className="p-6 bg-gray-50 flex-1 flex flex-col items-center justify-center">
@@ -212,6 +234,8 @@ const UPISimulation = () => {
                   ></div>
                 ))}
               </div>
+              {/* Instruction Hint */}
+              <p className="text-xs text-gray-400 mb-4">Hint: Try 1234</p>
             </div>
 
             {/* Custom Number Pad */}
@@ -222,7 +246,18 @@ const UPISimulation = () => {
                   onClick={() => {
                     const newPin = pin + num;
                     if (newPin.length <= 4) setPin(newPin);
-                    if (newPin.length === 4) setTimeout(() => setStep(5), 300);
+                    // --- VALIDATION LOGIC ---
+                    if (newPin.length === 4) {
+                        if (newPin === "1234") {
+                            setTimeout(() => setStep(5), 300);
+                        } else {
+                            logActivity('failed_pin'); // <--- LOG FAILURE
+                            setTimeout(() => {
+                                alert("Wrong PIN! Try 1234.");
+                                setPin(""); 
+                            }, 100);
+                        }
+                    }
                   }}
                   className="p-6 text-2xl font-semibold active:bg-gray-200 text-gray-800"
                 >
@@ -234,7 +269,17 @@ const UPISimulation = () => {
                 onClick={() => {
                   const newPin = pin + "0";
                   if (newPin.length <= 4) setPin(newPin);
-                  if (newPin.length === 4) setTimeout(() => setStep(5), 300);
+                  if (newPin.length === 4) {
+                      if (newPin === "1234") {
+                          setTimeout(() => setStep(5), 300);
+                      } else {
+                          logActivity('failed_pin'); // <--- LOG FAILURE
+                          setTimeout(() => {
+                              alert("Wrong PIN! Try 1234.");
+                              setPin(""); 
+                          }, 100);
+                      }
+                  }
                 }}
                 className="p-6 text-2xl font-semibold active:bg-gray-200 text-gray-800"
               >
