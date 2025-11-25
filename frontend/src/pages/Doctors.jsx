@@ -1,18 +1,11 @@
 import React, { useState } from "react";
-import {
-  ArrowLeft,
-  Video,
-  Phone,
-  Calendar,
-  CheckCircle,
-  Loader2,
-} from "lucide-react";
+import { ArrowLeft, Video, Phone, Calendar, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { saveOfflineAction } from "../utils/offlineSync"; // Import offline helper
 
 const Doctors = () => {
   const navigate = useNavigate();
   const [filter, setFilter] = useState("All");
-  // FIXED: Track booking per doctor ID, not globally
   const [bookingStates, setBookingStates] = useState({});
 
   const doctors = [
@@ -55,18 +48,60 @@ const Doctors = () => {
     },
   ];
 
-  const handleConnect = (doc) => {
-    // Set this specific doctor as booking
+  // --- MODIFIED: Connect to Backend ---
+  const handleConnect = async (doc) => {
     setBookingStates({ ...bookingStates, [doc.id]: true });
 
-    // Simulate API delay
-    setTimeout(() => {
-      alert(
-        `✅ Appointment Confirmed!\n\nDoctor: ${doc.name}\nTime: Today, 4:30 PM\nToken: #GR-992`
-      );
-      // Clear booking state for this doctor
-      setBookingStates({ ...bookingStates, [doc.id]: false });
-    }, 1500);
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const token = localStorage.getItem("token");
+
+    // Simulate waiting for connection
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    if (storedUser && token) {
+      const payload = {
+        user_id: storedUser.id,
+        module_id: "tele_medicine", // Matches backend analytics
+        points: 30,
+      };
+
+      const logPayload = {
+        user_id: storedUser.id,
+        module_id: "tele_medicine",
+        action: "booked_appointment",
+      };
+
+      if (!navigator.onLine) {
+        saveOfflineAction("/api/progress", "POST", payload);
+        saveOfflineAction("/api/log", "POST", logPayload);
+      } else {
+        try {
+          await fetch("http://localhost:8080/api/progress", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(payload),
+          });
+          await fetch("http://localhost:8080/api/log", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(logPayload),
+          });
+        } catch (e) {
+          console.error("API Error", e);
+        }
+      }
+    }
+
+    alert(
+      `✅ Appointment Confirmed!\n\nDoctor: ${doc.name}\nTime: Today, 4:30 PM\nToken: #GR-992\n\n(+30 Points Added)`
+    );
+    setBookingStates({ ...bookingStates, [doc.id]: false });
   };
 
   return (
@@ -112,7 +147,6 @@ const Doctors = () => {
           .filter((d) => filter === "All" || d.type.includes(filter))
           .map((doc) => {
             const isBooking = bookingStates[doc.id];
-
             return (
               <div
                 key={doc.id}
@@ -172,13 +206,12 @@ const Doctors = () => {
                     >
                       {isBooking ? (
                         <>
-                          <Loader2 size={18} className="animate-spin" />
+                          <Loader2 size={18} className="animate-spin" />{" "}
                           Booking...
                         </>
                       ) : (
                         <>
-                          <Video size={18} />
-                          Consult Now
+                          <Video size={18} /> Consult Now
                         </>
                       )}
                     </button>
@@ -191,7 +224,7 @@ const Doctors = () => {
                     disabled={isBooking}
                     className={`px-4 rounded-xl border transition ${
                       isBooking
-                        ? "bg-gray-50 text-gray-400 border-gray-100 cursor-not-allowed"
+                        ? "bg-gray-50 text-gray-400 border-gray-100"
                         : "bg-green-50 text-green-600 border-green-100 hover:bg-green-100"
                     }`}
                   >
