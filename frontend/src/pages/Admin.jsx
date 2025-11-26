@@ -26,6 +26,7 @@ const Admin = () => {
     villages: [],
     module_stats: [],
     struggles: [],
+    recent_logs: [], // --- REFINEMENT 3: Added state for logs
   });
 
   useEffect(() => {
@@ -45,6 +46,7 @@ const Admin = () => {
             villages: data.villages || [],
             module_stats: data.module_stats || [],
             struggles: data.struggles || [],
+            recent_logs: data.recent_logs || [], // Added
           });
         })
         .catch((err) => console.error("Admin fetch error:", err));
@@ -90,7 +92,7 @@ const Admin = () => {
         <StatCard
           icon={<TrendingUp size={24} />}
           label="Avg Literacy Score"
-          value={`${stats.avg_score}/100`}
+          value={`${stats.avg_score}/600`}
           color="bg-green-600"
         />
         <StatCard
@@ -272,6 +274,48 @@ const Admin = () => {
           </div>
         </div>
       </div>
+
+      {/* --- REFINEMENT 3: Live Activity Feed --- */}
+      <div className="bg-white p-6 rounded-xl border border-gray-100 mb-8">
+        <h3 className="text-base font-semibold text-gray-900 mb-4">
+          📡 Live Network Activity
+        </h3>
+        <div className="space-y-4">
+          {stats.recent_logs.map((log, idx) => (
+            <div
+              key={idx}
+              className="flex items-center justify-between text-sm border-b border-gray-50 pb-2 last:border-0 last:pb-0"
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`w-2 h-2 rounded-full ${
+                    log.action.includes("failed")
+                      ? "bg-red-500"
+                      : "bg-green-500"
+                  }`}
+                ></div>
+                <span className="font-medium text-gray-700">{log.user}</span>
+                <span className="text-gray-400">→</span>
+                <span className="text-gray-600 capitalize">
+                  {log.action.replace(/_/g, " ")}
+                </span>
+                <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">
+                  {log.module}
+                </span>
+              </div>
+              <span className="text-gray-400 text-xs font-mono">
+                {log.time}
+              </span>
+            </div>
+          ))}
+          {stats.recent_logs.length === 0 && (
+            <p className="text-gray-400 text-sm text-center">
+              Waiting for activity...
+            </p>
+          )}
+        </div>
+      </div>
+      {/* ---------------------------------------- */}
     </div>
   );
 };

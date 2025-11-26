@@ -18,7 +18,7 @@ var jwtKey = []byte("hackathon_secret_key_123")
 
 // --- STRUCTS ---
 type Credentials struct {
-	Phone    string `json:"phone"` // Changed
+	Phone    string `json:"phone"`
 	Password string `json:"password"`
 }
 
@@ -34,7 +34,7 @@ type Claims struct {
 func Register(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Name     string `json:"name"`
-		Phone    string `json:"phone"` // Changed
+		Phone    string `json:"phone"`
 		Password string `json:"password"`
 		Village  string `json:"village"`
 	}
@@ -44,11 +44,19 @@ func Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// --- REFINEMENT 2: Village Name Normalization ---
+	// Converts "kolkata" -> "Kolkata"
+	req.Village = strings.TrimSpace(req.Village)
+	if len(req.Village) > 0 {
+		req.Village = strings.ToUpper(string(req.Village[0])) + req.Village[1:]
+	}
+	// ------------------------------------------------
+
 	hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 
 	user := User{
 		Name:       req.Name,
-		Phone:      req.Phone, // Changed
+		Phone:      req.Phone,
 		Password:   string(hashedPassword),
 		Role:       "user",
 		Village:    req.Village,
@@ -71,7 +79,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&creds)
 
 	var user User
-	// Search by Phone
 	if err := DB.Where("phone = ?", creds.Phone).First(&user).Error; err != nil {
 		http.Error(w, "User not found", http.StatusUnauthorized)
 		return
@@ -99,7 +106,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// 3. GET PROFILE (UPDATED)
+// 3. GET PROFILE
 func GetProfile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
@@ -191,14 +198,12 @@ func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 		Value int    `json:"value"`
 	}
 	var rawStats []ModuleStat
-
 	DB.Model(&Progress{}).
 		Select("module_id as name, COUNT(id) as value").
 		Group("module_id").
 		Scan(&rawStats)
 
 	consolidatedMap := make(map[string]int)
-
 	for _, stat := range rawStats {
 		label := stat.Name
 		switch stat.Name {
@@ -246,6 +251,23 @@ func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// --- REFINEMENT 3: Recent Activity Feed ---
+	type RecentLog struct {
+		User   string `json:"user"`
+		Action string `json:"action"`
+		Module string `json:"module"`
+		Time   string `json:"time"`
+	}
+	var recentLogs []RecentLog
+
+	DB.Table("activity_logs").
+		Select("users.name as user, activity_logs.action, activity_logs.module_id as module, to_char(activity_logs.created_at, 'HH:MI AM') as time").
+		Joins("left join users on users.id = activity_logs.user_id").
+		Order("activity_logs.created_at desc").
+		Limit(5).
+		Scan(&recentLogs)
+	// -----------------------------------------
+
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"total_users":  totalUsers,
 		"avg_score":    int(avgScore),
@@ -253,6 +275,7 @@ func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 		"villages":     villageStats,
 		"module_stats": moduleStats,
 		"struggles":    struggles,
+		"recent_logs":  recentLogs, // Added to response
 	})
 }
 
@@ -266,6 +289,7 @@ func GetSchemes(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(schemes)
 }
 
+// MIDDLEWARE
 func IsAuthorized(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")

@@ -57,7 +57,7 @@ const Login = ({ setIsAuthenticated }) => {
     navigate("/dashboard");
   };
 
-  // --- MODIFIED: Reverse Geocoding to get Area Name ---
+  // --- Auto-Detect Location ---
   const detectLocation = () => {
     setLocationLoading(true);
     if (navigator.geolocation) {
@@ -76,7 +76,7 @@ const Login = ({ setIsAuthenticated }) => {
             const data = await response.json();
             const addr = data.address;
 
-            // Smart fallback to find the most relevant name (Village -> Town -> City -> District)
+            // Smart fallback to find the most relevant name
             const locationName =
               addr.village ||
               addr.town ||
@@ -89,7 +89,6 @@ const Login = ({ setIsAuthenticated }) => {
             setVillage(locationName);
           } catch (err) {
             console.error("Geocoding Error:", err);
-            // Fallback to coordinates if API fails (e.g., no internet)
             setVillage(
               `Lat: ${latitude.toFixed(4)}, Long: ${longitude.toFixed(4)}`
             );
@@ -111,6 +110,14 @@ const Login = ({ setIsAuthenticated }) => {
 
   const handleAuth = async (e) => {
     e.preventDefault();
+
+    // --- REFINEMENT 1: Phone Validation ---
+    if (!/^\d{10}$/.test(phone)) {
+      alert("Please enter a valid 10-digit phone number.");
+      return;
+    }
+    // -------------------------------------
+
     const endpoint = isRegister ? "register" : "login";
     const payload = isRegister
       ? { name, phone, password, village }
@@ -341,7 +348,7 @@ const Login = ({ setIsAuthenticated }) => {
         {/* Demo Credentials */}
         <div className="bg-gray-50 p-4 text-xs text-gray-500 text-center border-t border-gray-100">
           <p className="font-medium mb-1">Demo Access</p>
-          <p>👮‍♂️ Admin: 9999999999 / admin123</p>
+          {/* <p>👮‍♂️ Admin: 9999999999 / admin123</p> */}
           <p>🧑‍🌾 User: 9876543210 / 123456</p>
         </div>
       </div>
