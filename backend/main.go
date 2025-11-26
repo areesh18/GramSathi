@@ -18,7 +18,7 @@ var jwtKey = []byte("hackathon_secret_key_123")
 
 // --- STRUCTS ---
 type Credentials struct {
-	Email    string `json:"email"`
+	Phone    string `json:"phone"` // Changed
 	Password string `json:"password"`
 }
 
@@ -34,7 +34,7 @@ type Claims struct {
 func Register(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		Name     string `json:"name"`
-		Email    string `json:"email"`
+		Phone    string `json:"phone"` // Changed
 		Password string `json:"password"`
 		Village  string `json:"village"`
 	}
@@ -48,7 +48,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 
 	user := User{
 		Name:       req.Name,
-		Email:      req.Email,
+		Phone:      req.Phone, // Changed
 		Password:   string(hashedPassword),
 		Role:       "user",
 		Village:    req.Village,
@@ -57,7 +57,7 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if result := DB.Create(&user); result.Error != nil {
-		http.Error(w, "Email already exists", http.StatusBadRequest)
+		http.Error(w, "Phone number already exists", http.StatusBadRequest)
 		return
 	}
 
@@ -71,7 +71,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&creds)
 
 	var user User
-	if err := DB.Where("email = ?", creds.Email).First(&user).Error; err != nil {
+	// Search by Phone
+	if err := DB.Where("phone = ?", creds.Phone).First(&user).Error; err != nil {
 		http.Error(w, "User not found", http.StatusUnauthorized)
 		return
 	}
@@ -108,21 +109,16 @@ func GetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch completed modules to populate Badges
 	var progress []Progress
 	DB.Where("user_id = ?", user.ID).Find(&progress)
 
-	// Use a map to ensure unique badges
 	badgeMap := make(map[string]bool)
 	for _, p := range progress {
-		// Only count as badge if points > 0 (avoids failed attempts if you track those)
-		ifQP := p.Points > 0
-		if ifQP {
+		if p.Points > 0 {
 			badgeMap[p.ModuleID] = true
 		}
 	}
 
-	// Convert map to slice
 	user.Badges = make([]string, 0, len(badgeMap))
 	for module := range badgeMap {
 		user.Badges = append(user.Badges, module)
@@ -145,7 +141,7 @@ func RecordProgress(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// 5. LOG ACTIVITY (NEW)
+// 5. LOG ACTIVITY
 func LogActivity(w http.ResponseWriter, r *http.Request) {
 	var log ActivityLog
 	if err := json.NewDecoder(r.Body).Decode(&log); err != nil {
@@ -157,15 +153,13 @@ func LogActivity(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-// 6. ADMIN STATS (UPGRADED)
+// 6. ADMIN STATS
 func GetAdminStats(w http.ResponseWriter, r *http.Request) {
-	// A. Basic Counters
 	var totalUsers int64
 	var avgScore float64
 	DB.Model(&User{}).Where("role = ?", "user").Count(&totalUsers)
 	DB.Model(&User{}).Where("role = ?", "user").Select("COALESCE(AVG(total_score), 0)").Scan(&avgScore)
 
-	// B. Adoption Trend
 	type MonthlyStat struct {
 		Month string `json:"name"`
 		Users int    `json:"users"`
@@ -178,7 +172,6 @@ func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 		Order("MIN(created_at)").
 		Scan(&trend)
 
-	// C. Village Impact
 	type VillageStat struct {
 		Name  string  `json:"name"`
 		Score float64 `json:"score"`
@@ -190,30 +183,26 @@ func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 		Select("village as name, AVG(total_score) as score, COUNT(id) as count").
 		Group("village").
 		Order("score desc").
-		Limit(5).
+		Limit(10).
 		Scan(&villageStats)
 
-	// D. Module Popularity (CONSOLIDATED FIX)
 	type ModuleStat struct {
 		Name  string `json:"name"`
 		Value int    `json:"value"`
 	}
 	var rawStats []ModuleStat
 
-	// 1. Fetch raw data grouped by ID
 	DB.Model(&Progress{}).
 		Select("module_id as name, COUNT(id) as value").
 		Group("module_id").
 		Scan(&rawStats)
 
-	// 2. Create a map to aggregate duplicates
 	consolidatedMap := make(map[string]int)
 
 	for _, stat := range rawStats {
 		label := stat.Name
-		// Map technical IDs to readable labels
 		switch stat.Name {
-		case "upi", "upi_payment", "upi_balance_check": // Merge all UPI variants
+		case "upi", "upi_payment", "upi_balance_check":
 			label = "UPI Payments"
 		case "quiz_literacy_101":
 			label = "Safety Quiz"
@@ -228,17 +217,14 @@ func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 		case "sim_digilocker":
 			label = "DigiLocker"
 		}
-		// Add to the total for this label
 		consolidatedMap[label] += stat.Value
 	}
 
-	// 3. Convert map back to slice for JSON
 	var moduleStats []ModuleStat
 	for name, value := range consolidatedMap {
 		moduleStats = append(moduleStats, ModuleStat{Name: name, Value: value})
 	}
 
-	// E. Struggle Analysis
 	type StruggleStat struct {
 		Module   string `json:"module"`
 		Failures int    `json:"failures"`
@@ -265,7 +251,7 @@ func GetAdminStats(w http.ResponseWriter, r *http.Request) {
 		"avg_score":    int(avgScore),
 		"trend":        trend,
 		"villages":     villageStats,
-		"module_stats": moduleStats, // Now aggregated
+		"module_stats": moduleStats,
 		"struggles":    struggles,
 	})
 }
@@ -280,7 +266,6 @@ func GetSchemes(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(schemes)
 }
 
-// --- MIDDLEWARE ---
 func IsAuthorized(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
@@ -310,7 +295,7 @@ func main() {
 
 	r.HandleFunc("/api/user/{id}", IsAuthorized(GetProfile)).Methods("GET")
 	r.HandleFunc("/api/progress", IsAuthorized(RecordProgress)).Methods("POST")
-	r.HandleFunc("/api/log", IsAuthorized(LogActivity)).Methods("POST") // <--- NEW ROUTE
+	r.HandleFunc("/api/log", IsAuthorized(LogActivity)).Methods("POST")
 	r.HandleFunc("/api/admin/stats", IsAuthorized(GetAdminStats)).Methods("GET")
 	r.HandleFunc("/api/schemes", IsAuthorized(GetSchemes)).Methods("GET")
 

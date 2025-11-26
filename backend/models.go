@@ -7,7 +7,7 @@ import (
 type User struct {
 	ID         uint      `gorm:"primaryKey" json:"id"`
 	Name       string    `json:"name"`
-	Email      string    `gorm:"unique" json:"email"`
+	Phone      string    `gorm:"unique" json:"phone"` // Changed from Email
 	Password   string    `json:"-"`
 	Role       string    `json:"role"`
 	Village    string    `json:"village"`

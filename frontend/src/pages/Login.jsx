@@ -1,14 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Lock, Mail, ArrowRight, User, MapPin, WifiOff } from "lucide-react";
+import {
+  Lock,
+  Phone,
+  ArrowRight,
+  User,
+  MapPin,
+  WifiOff,
+  Loader2,
+  Crosshair,
+} from "lucide-react";
 import { useLanguage } from "../context/LanguageContext";
 
 const Login = ({ setIsAuthenticated }) => {
-  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [village, setVillage] = useState("");
   const [isRegister, setIsRegister] = useState(false);
+  const [locationLoading, setLocationLoading] = useState(false);
   const navigate = useNavigate();
 
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -40,7 +50,6 @@ const Login = ({ setIsAuthenticated }) => {
     localStorage.setItem("token", "guest-token");
     localStorage.setItem("user", JSON.stringify(guestUser));
 
-    // Update auth state
     if (setIsAuthenticated) {
       setIsAuthenticated(true);
     }
@@ -48,12 +57,64 @@ const Login = ({ setIsAuthenticated }) => {
     navigate("/dashboard");
   };
 
+  // --- MODIFIED: Reverse Geocoding to get Area Name ---
+  const detectLocation = () => {
+    setLocationLoading(true);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+
+          try {
+            // Use OpenStreetMap Nominatim API (Free, No Key Required)
+            const response = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+            );
+
+            if (!response.ok) throw new Error("Geocoding failed");
+
+            const data = await response.json();
+            const addr = data.address;
+
+            // Smart fallback to find the most relevant name (Village -> Town -> City -> District)
+            const locationName =
+              addr.village ||
+              addr.town ||
+              addr.city ||
+              addr.suburb ||
+              addr.county ||
+              addr.state_district ||
+              "Unknown Location";
+
+            setVillage(locationName);
+          } catch (err) {
+            console.error("Geocoding Error:", err);
+            // Fallback to coordinates if API fails (e.g., no internet)
+            setVillage(
+              `Lat: ${latitude.toFixed(4)}, Long: ${longitude.toFixed(4)}`
+            );
+          } finally {
+            setLocationLoading(false);
+          }
+        },
+        (error) => {
+          console.error("Location Error:", error);
+          alert("Could not detect location. Please enter manually.");
+          setLocationLoading(false);
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by your browser.");
+      setLocationLoading(false);
+    }
+  };
+
   const handleAuth = async (e) => {
     e.preventDefault();
     const endpoint = isRegister ? "register" : "login";
     const payload = isRegister
-      ? { name, email, password, village }
-      : { email, password };
+      ? { name, phone, password, village }
+      : { phone, password };
 
     try {
       const controller = new AbortController();
@@ -76,7 +137,6 @@ const Login = ({ setIsAuthenticated }) => {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
 
-          // Update auth state
           if (setIsAuthenticated) {
             setIsAuthenticated(true);
           }
@@ -88,7 +148,7 @@ const Login = ({ setIsAuthenticated }) => {
           }
         }
       } else {
-        alert("Credentials Invalid.");
+        alert("Invalid Credentials or User already exists.");
       }
     } catch (err) {
       console.error(err);
@@ -153,7 +213,7 @@ const Login = ({ setIsAuthenticated }) => {
           <div className="px-8 pb-8">
             <div className="text-center mb-6">
               <p className="text-gray-600 text-sm">
-                {isRegister ? "Create your account" : "Sign in to continue"}
+                {isRegister ? "Create your account" : "Sign in with Phone"}
               </p>
             </div>
 
@@ -181,21 +241,36 @@ const Login = ({ setIsAuthenticated }) => {
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-700 mb-2">
-                      Village Name
+                      Location (Auto-Detect)
                     </label>
-                    <div className="relative">
-                      <MapPin
-                        className="absolute left-3 top-3 text-gray-400"
-                        size={18}
-                      />
-                      <input
-                        type="text"
-                        placeholder="Enter village name"
-                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50 outline-none transition-all text-sm"
-                        value={village}
-                        onChange={(e) => setVillage(e.target.value)}
-                        required
-                      />
+                    <div className="relative flex gap-2">
+                      <div className="relative flex-1">
+                        <MapPin
+                          className="absolute left-3 top-3 text-gray-400"
+                          size={18}
+                        />
+                        <input
+                          type="text"
+                          placeholder="Village Name"
+                          className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50 outline-none transition-all text-sm"
+                          value={village}
+                          onChange={(e) => setVillage(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={detectLocation}
+                        disabled={locationLoading}
+                        className="bg-gray-100 text-gray-600 px-3 rounded-lg hover:bg-gray-200 transition-colors border border-gray-200"
+                        title="Auto Detect Location"
+                      >
+                        {locationLoading ? (
+                          <Loader2 size={18} className="animate-spin" />
+                        ) : (
+                          <Crosshair size={18} />
+                        )}
+                      </button>
                     </div>
                   </div>
                 </>
@@ -203,19 +278,19 @@ const Login = ({ setIsAuthenticated }) => {
 
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-2">
-                  Email
+                  Phone Number
                 </label>
                 <div className="relative">
-                  <Mail
+                  <Phone
                     className="absolute left-3 top-3 text-gray-400"
                     size={18}
                   />
                   <input
-                    type="email"
-                    placeholder="Enter your email"
+                    type="tel"
+                    placeholder="e.g. 9876543210"
                     className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-50 outline-none transition-all text-sm"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                     required
                   />
                 </div>
@@ -266,8 +341,8 @@ const Login = ({ setIsAuthenticated }) => {
         {/* Demo Credentials */}
         <div className="bg-gray-50 p-4 text-xs text-gray-500 text-center border-t border-gray-100">
           <p className="font-medium mb-1">Demo Access</p>
-          <p>👮‍♂️ Admin: admin@gramsathi.in / admin123</p>
-          <p>🧑‍🌾 User: Any registered account</p>
+          <p>👮‍♂️ Admin: 9999999999 / admin123</p>
+          <p>🧑‍🌾 User: 9876543210 / 123456</p>
         </div>
       </div>
     </div>

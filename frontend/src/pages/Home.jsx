@@ -23,9 +23,12 @@ const Home = () => {
   const [showVoiceHints, setShowVoiceHints] = useState(false);
 
   const storedUser = JSON.parse(localStorage.getItem("user") || "{}");
+
+  // --- UPDATED: Initialize village from LocalStorage ---
   const [user, setUser] = useState({
     name: storedUser.name || "Guest",
     score: storedUser.total_score || 0,
+    village: storedUser.village || "Unknown Location", // Dynamic Village
   });
 
   // Voice command hints
@@ -129,6 +132,7 @@ const Home = () => {
     recognition.start();
   };
 
+  // --- UPDATED: Fetch latest data from API (including village) ---
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (storedUser.id && storedUser.id !== "guest" && navigator.onLine) {
@@ -138,7 +142,11 @@ const Home = () => {
         .then((res) => (res.ok ? res.json() : null))
         .then((data) => {
           if (data) {
-            setUser({ name: data.name, score: data.total_score });
+            setUser({
+              name: data.name,
+              score: data.total_score,
+              village: data.village || storedUser.village, // Sync Village
+            });
             localStorage.setItem("user", JSON.stringify(data));
           }
         })
@@ -175,10 +183,11 @@ const Home = () => {
           </div>
 
           <div className="flex flex-col md:flex-row gap-4 md:items-center">
-            <div className="inline-flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg text-sm border border-gray-200 w-fit">
-              <MapPin size={14} className="text-gray-500" />
-              <span className="text-gray-700 font-medium">
-                Village: Rampur, UP
+            {/* --- DYNAMIC LOCATION DISPLAY --- */}
+            <div className="inline-flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-lg text-sm border border-gray-200 w-fit max-w-xs truncate">
+              <MapPin size={14} className="text-gray-500 shrink-0" />
+              <span className="text-gray-700 font-medium truncate">
+                {user.village}
               </span>
             </div>
 
