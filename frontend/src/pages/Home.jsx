@@ -309,7 +309,7 @@ const Home = () => {
 
         {/* Quick Services */}
         <div>
-          <h2 className="font-semibold text-gray-900 mb-4 text-base">
+          <h2 className="font-semibold  text-gray-900 mb-4 text-base">
             {t("quick_services")}
           </h2>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
